@@ -1,0 +1,72 @@
+/* Physical-material interactions: the sample chip deck and the squeegee reveal. */
+
+/* ---------- Sample chips ---------- */
+.sample-column { display: flex; flex-direction: column; min-width: 0; }
+.sample-deck { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(14px,2vw,26px); padding-top: 26px; }
+.sample-chip { --rx: 0deg; --ry: 0deg; --lx: 50%; --ly: 38%; --sx: 50%; display: flex; flex-direction: column; gap: 20px; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; }
+.chip-lift { display: block; transition: transform .6s cubic-bezier(.2,.9,.25,1), opacity .4s; opacity: .78; }
+.sample-chip:nth-child(1) .chip-lift { transform: rotate(-3deg) scale(.92); }
+.sample-chip:nth-child(2) .chip-lift { transform: rotate(1.5deg) scale(.92); }
+.sample-chip:nth-child(3) .chip-lift { transform: rotate(3.5deg) scale(.92); }
+.sample-chip:hover .chip-lift { opacity: .95; }
+.sample-chip.active .chip-lift { transform: translateY(-16px) scale(1.04); opacity: 1; }
+/* Flat, with perspective baked in: a preserve-3d context would z-fight the face against the body. */
+.chip-body { position: relative; display: block; aspect-ratio: 1; border-radius: 5px; transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+  background: linear-gradient(135deg,var(--chip-accent),var(--chip-base) 55%);
+  /* A ~6mm coated chip: stacked edge shadows give it thickness, then a soft drop shadow. */
+  box-shadow: inset 0 0 0 1px #ffffff26, inset 0 1px 0 #ffffff59, 0 1px 0 #00000080, 0 2px 0 #0000006b, 0 3px 0 #00000059, 0 4px 0 #00000047, 0 5px 0 #00000038, 0 24px 34px -14px #000000d9; }
+.sample-chip.active .chip-body { box-shadow: inset 0 0 0 1px #ffffff33, inset 0 1px 0 #ffffff70, 0 1px 0 #00000080, 0 2px 0 #0000006b, 0 3px 0 #00000059, 0 4px 0 #00000047, 0 5px 0 #00000038, 0 40px 50px -18px #000000f0; }
+.chip-face { position: absolute; inset: 0; border-radius: inherit; background-size: cover; transition: opacity .5s; }
+.chip-sheen { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(circle at var(--lx) var(--ly),rgb(255 255 255 / var(--spec)) 0%,transparent var(--spec-size)),
+    linear-gradient(105deg,transparent 38%,rgb(255 255 255 / var(--streak)) 50%,transparent 60%);
+  background-size: 100% 100%,280% 100%; background-position: 0 0,var(--sx) 0; }
+.chip-sheen::after { content: ''; position: absolute; inset: 0; border-radius: inherit; mix-blend-mode: multiply; background: radial-gradient(circle at calc(100% - var(--lx)) calc(100% - var(--ly)),#0000 30%,#00000059); }
+/* Gloss metallic throws a hot, tight highlight; flake is broken up by chips; concrete stays matte. */
+.sample-chip[data-system="0"] { --spec: .62; --spec-size: 42%; --streak: .4; }
+.sample-chip[data-system="1"] { --spec: .42; --spec-size: 50%; --streak: .22; }
+.sample-chip[data-system="2"] { --spec: .2; --spec-size: 75%; --streak: .07; }
+.chip-stamp { position: absolute; left: 9%; bottom: 8%; font: 7px ui-monospace,monospace; letter-spacing: .14em; color: #ffffffd0; text-shadow: 0 1px 2px #0009; mix-blend-mode: overlay; }
+.chip-caption { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 6px; align-items: baseline; }
+.chip-caption .finish-index { font: 9px ui-monospace,monospace; color: #9d90a3; grid-row: span 2; }
+.chip-caption strong { font-family: var(--font-sans); font-weight: 400; font-size: clamp(16px,1.5vw,22px); letter-spacing: -.035em; color: #a99fae; transition: color .3s; }
+.chip-caption small { font-size: 10px; color: #9c8fa3; }
+.sample-chip.active .chip-caption strong { color: #fff; }
+.sample-chip.active .finish-index { color: var(--tone-soft); }
+.sample-chip:focus-visible { outline: none; }
+.sample-chip:focus-visible .chip-body { outline: 2px solid var(--tone-soft); outline-offset: 6px; }
+.sample-hint { margin-top: 26px; font: 9px ui-monospace,monospace; letter-spacing: .1em; text-transform: uppercase; color: #bcaec3; }
+.sample-hint .hint-touch { display: none; align-items: center; gap: 8px; font: inherit; color: #f1e9f4; border: 1px solid #ffffff40; border-radius: 30px; padding: 10px 14px; background: #0004; }
+@media (pointer: coarse) { .sample-hint .hint-pointer { display: none; } .sample-hint .hint-touch { display: inline-flex; } }
+@media (max-width: 800px) {
+  .sample-deck { padding-top: 10px; }
+  .chip-caption { grid-template-columns: 1fr; }
+  .chip-caption .finish-index { grid-row: auto; }
+  .chip-caption small { display: none; }
+  .chip-stamp { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .chip-lift { transition: none; } }
+
+/* ---------- Squeegee reveal ---------- */
+.squeegee { margin: 0; }
+.squeegee-stage { position: relative; aspect-ratio: 2 / 1; overflow: hidden; border: 1px solid #ffffff1f; background: #0b0910; box-shadow: 0 40px 90px -40px #000; }
+.squeegee-stage canvas { display: block; width: 100%; height: 100%; cursor: none; touch-action: pan-y; }
+.squeegee-pill { position: absolute; top: 18px; font: 9px ui-monospace,monospace; letter-spacing: .14em; text-transform: uppercase; padding: 7px 11px; border-radius: 30px; backdrop-filter: blur(8px); pointer-events: none; }
+.squeegee-pill.before { left: 18px; background: #f4f1ecd9; color: #1b1a1e; }
+.squeegee-pill.after { right: 18px; background: #0b0910b3; color: #fff; border: 1px solid #ffffff30; opacity: 0; transition: opacity .5s; }
+.squeegee-pill.after.shown { opacity: 1; }
+.squeegee-cue { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); font: 9px ui-monospace,monospace; letter-spacing: .14em; text-transform: uppercase; color: #fff; background: #0b0910b3; border: 1px solid #ffffff30; padding: 9px 14px; border-radius: 30px; pointer-events: none; animation: squeegee-cue 2.4s ease-in-out infinite; }
+@keyframes squeegee-cue { 50% { transform: translateX(calc(-50% + 14px)); } }
+.squeegee-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; padding-top: 20px; }
+.squeegee-meter { position: relative; display: inline-flex; align-items: center; min-width: 210px; height: 34px; padding: 0 14px; border: 1px solid #ffffff30; border-radius: 30px; overflow: hidden; }
+.squeegee-meter > span { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg,color-mix(in srgb,var(--tone-soft) 45%,transparent),color-mix(in srgb,var(--tone-glow) 70%,transparent)); transition: width .4s ease; }
+.squeegee-meter b { position: relative; font: 500 9px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; color: #fff; }
+.squeegee-actions { display: flex; gap: 10px; }
+.squeegee-actions button { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 15px; border: 1px solid #ffffff40; border-radius: 30px; font-size: 11px; color: #f1e9f4; background: #0b091066; }
+.squeegee-actions button:hover { background: #f1e9f4; color: #141016; }
+.squeegee-bar small { margin-left: auto; font-size: 10px; color: #b9adbf; }
+@media (max-width: 800px) {
+  .squeegee-stage { aspect-ratio: 4 / 3; }
+  .squeegee-bar small { margin-left: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .squeegee-cue { animation: none; } }

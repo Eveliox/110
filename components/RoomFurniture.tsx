@@ -189,7 +189,7 @@ function Patio() {
 export const RoomFurniture = memo(function RoomFurniture({ room }: { room: number }) {
   const resources = useMemo(() => {
     const wood = detailMap("wood"), fabric = detailMap("fabric");
-    const material = (color: string, roughness: number, metalness = 0, map?: THREE.Texture) => new THREE.MeshStandardMaterial({ color, roughness, metalness, map, bumpMap: map, bumpScale: map === fabric ? .002 : .001 });
+    const material = (color: string, roughness: number, metalness = 0, map?: THREE.Texture) => new THREE.MeshStandardMaterial({ color, roughness, metalness, ...(map && { map, bumpMap: map, bumpScale: map === fabric ? .002 : .001 }) });
     const materials: Record<Surface, THREE.MeshStandardMaterial> = {
       oak: material("#bc9565", .55, 0, wood), walnut: material("#705039", .43, 0, wood),
       linen: material("#b8a38a", .95, 0, fabric), cream: material("#e4d8c2", .95, 0, fabric),

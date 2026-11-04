@@ -56,9 +56,12 @@ export function RoomArchitecture({ room, daylight, firstPerson }: { room: number
       <Box at={[0, 2.2, .04]} size={[1.09, .07, .07]} color={trim} />
       <Box at={[-.31, 1.02, .09]} size={[.13, .025, .06]} color="#b5ad96" />
     </group>}
+    {/* Fixtures belong to the ceiling: from the open dollhouse view they'd float across the room. */}
     {(industrial || room === 2 || room === 3) && [-1.55, 1.55].map(x => <group key={x}>
-      <Box at={[x, 2.77, -.7]} size={[.14, .07, 2.8]} color="#414343" />
-      <Box at={[x, 2.72, -.7]} size={[.09, .025, 2.65]} color={lamp} glow={glow} />
+      {firstPerson && <>
+        <Box at={[x, 2.77, -.7]} size={[.14, .07, 2.8]} color="#414343" />
+        <Box at={[x, 2.72, -.7]} size={[.09, .025, 2.65]} color={lamp} glow={glow} />
+      </>}
       <pointLight position={[x, 2.5, -.7]} color={lamp} intensity={daylight > .75 ? 3 : 1} distance={5} decay={2} />
     </group>)}
     {room === 0 && <>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { buildFinishCanvas, buildInstallStageCanvas } from "@/lib/finish-texture";
+import { buildFinishCanvas, buildInstallStageCanvas, finishRepeat } from "@/lib/finish-texture";
 import { smoothProgress } from "@/lib/install-sequence";
 import type { RoomAppearance } from "./FloorRoom";
 
@@ -15,13 +15,14 @@ export function InstallSurface({ appearance, reducedMotion = false }: { appearan
     const maps = [buildInstallStageCanvas(0, appearance.system, appearance.base, appearance.accent), buildInstallStageCanvas(.5, appearance.system, appearance.base, appearance.accent), buildFinishCanvas(appearance.system, appearance.base, appearance.accent)].map(canvas => {
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
       return texture;
     });
-    const uniforms = { installProgress: { value: 0 }, calmMotion: { value: 0 }, baseMap: { value: maps[1] }, finishMap: { value: maps[2] } };
+    const uniforms = { installProgress: { value: 0 }, calmMotion: { value: 0 }, baseMap: { value: maps[1] }, finishMap: { value: maps[2] }, finishRepeat: { value: finishRepeat(appearance.system) } };
     const material = new THREE.MeshStandardMaterial({ map: maps[0], roughness: .92, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
-      shader.fragmentShader = `uniform float installProgress; uniform float calmMotion; uniform sampler2D baseMap; uniform sampler2D finishMap;\n${shader.fragmentShader}`;
+      shader.fragmentShader = `uniform float installProgress; uniform float calmMotion; uniform sampler2D baseMap; uniform sampler2D finishMap; uniform float finishRepeat;\n${shader.fragmentShader}`;
       shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `
         float lane = min(5.0, floor(vMapUv.x * 6.0));
         float travel = mod(lane, 2.0) < 1.0 ? 1.0 - vMapUv.y : vMapUv.y;
@@ -32,7 +33,7 @@ export function InstallSurface({ appearance, reducedMotion = false }: { appearan
         finish = mix(finish, smoothstep(.50, .73, installProgress), calmMotion);
         vec4 concrete = texture2D(map, vMapUv);
         concrete.rgb *= 1.0 + .12 * smoothstep(0.0, .22, installProgress);
-        diffuseColor *= mix(mix(concrete, texture2D(baseMap, vMapUv), prime), texture2D(finishMap, vMapUv), finish);
+        diffuseColor *= mix(mix(concrete, texture2D(baseMap, vMapUv), prime), texture2D(finishMap, vMapUv * finishRepeat), finish);
       `);
     };
     return { maps, material, uniforms };

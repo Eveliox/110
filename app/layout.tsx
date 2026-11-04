@@ -4,6 +4,8 @@ import "./globals.css";
 import "./luxury.css";
 import "./flow.css";
 import "./floor-studio.css";
+import "./pour.css";
+import "./materials.css";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], style: ["normal", "italic"], axes: ["wdth"], display: "swap" });
 export const metadata: Metadata = {

@@ -1,0 +1,50 @@
+/* The poured-resin atmosphere (PourField) and everything that takes its colour from it. */
+
+/* Registered so the accent tones glide, rather than snap, when a visitor picks a finish. */
+@property --tone-soft { syntax: '<color>'; inherits: true; initial-value: #d5afcb; }
+@property --tone-em { syntax: '<color>'; inherits: true; initial-value: #c4adc9; }
+@property --tone-glow { syntax: '<color>'; inherits: true; initial-value: #e7cde7; }
+.site-shell { transition: --tone-soft 1.4s ease, --tone-em 1.4s ease, --tone-glow 1.4s ease; }
+
+.pour-field { position: absolute; inset: 0; transition: background 1.4s ease; }
+.pour-field canvas { width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; }
+
+.finishes-section .eyebrow,.section .eyebrow { color: var(--tone-soft); }
+.section h2 em,.about-copy h2 em { color: var(--tone-em); }
+.studio-heading h2 em,.quote-copy h2 span { color: var(--tone-soft); }
+.studio-heading .eyebrow { color: var(--tone-soft); }
+.finish-advice .advice-mark em { color: var(--tone-soft); }
+.button:hover,.flow-pill:hover { background: var(--tone-glow); border-color: var(--tone-glow); }
+.header::before { background: radial-gradient(ellipse at 30% 16%,color-mix(in srgb,var(--tone-glow) 90%,transparent) 0%,color-mix(in srgb,var(--tone-glow) 60%,transparent) 22%,color-mix(in srgb,var(--tone-glow) 25%,transparent) 43%,transparent 72%); }
+.site-shell .footer { background: radial-gradient(ellipse 270px 140px at 160px 100px,color-mix(in srgb,var(--tone-glow) 72%,transparent),transparent 80%); }
+
+/* Small labels sat at 7–8px in low-contrast grey over the gradient; give them a legible floor. */
+.eyebrow,.flow-overline,.flow-headline > .flow-overline,.flow-project-description > .flow-overline { font-size: 9px; }
+.flow-hero-meta { color: #e4dde8b0; font-size: 8px; }
+
+/* The headline rests on wet resin and catches a faint reflection of itself. */
+.flow-headline h1 { -webkit-box-reflect: below -.12em linear-gradient(transparent 58%,#ffffff2e); }
+.flow-headline > .flow-pill { margin-top: 62px; backdrop-filter: blur(6px); }
+.flow-stir-hint { display: block; margin-top: 22px; font: 8px ui-monospace,monospace; letter-spacing: .14em; text-transform: uppercase; color: #ffffffa0; }
+.flow-stir-hint .hint-touch { display: none; }
+@media (hover: none) { .flow-stir-hint .hint-pointer { display: none; } .flow-stir-hint .hint-touch { display: inline; } }
+
+/* Floor studio: the swatch choice is broadcast to the whole page. */
+.studio-wearing { margin-top: 14px; font-size: 10px; line-height: 1.7; color: #b9adbf; }
+.studio-wearing strong { color: var(--tone-soft); font-weight: 500; }
+.studio-wearing button { color: #f1e9f4; text-decoration: underline; text-underline-offset: 3px; font-size: inherit; }
+
+/* Scrolling into the studio, the room stands up out of the poured floor beneath it. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .floor-studio-shell { animation: studio-rise linear both; animation-timeline: view(); animation-range: cover 0% cover 22%; transform-origin: 50% 100%; }
+    @keyframes studio-rise {
+      from { transform: perspective(1600px) rotateX(38deg) scale(.88); opacity: .25; clip-path: inset(22% 4% 0 4%); }
+      to { transform: none; opacity: 1; clip-path: inset(0); }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-shell,.pour-field,.pour-field canvas { transition: none; }
+}
