@@ -5,6 +5,7 @@ import { Line, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { RoomPlant as Plant, Curtain } from "./RoomPlant";
 import { buildNormalCanvas } from "@/lib/finish-texture";
+import { Prop } from "./RoomProps";
 
 function Box({ at, size, color, glow = 0 }: { at: [number, number, number]; size: [number, number, number]; color: string; glow?: number }) {
   return <mesh position={at} castShadow={!glow} receiveShadow><boxGeometry args={size} /><meshStandardMaterial color={color} roughness={0.68} emissive={color} emissiveIntensity={glow} /></mesh>;
@@ -67,7 +68,7 @@ export function RoomArchitecture({ room, daylight, firstPerson }: { room: number
     {room === 0 && <>
       <pointLight position={[1.4, 1.65, -2.2]} color="#ffce8c" intensity={daylight > .65 ? 3 : .5} distance={5} decay={2} />
       <Artwork x={-.65} width={1.8} />
-      <Plant at={[-2.35, 0, -1.3]} scale={1.3} />
+      <Prop id="potted_plant_02" at={[-2.3, 0, -1.45]} scale={1.35} fallback={<Plant at={[-2.35, 0, -1.3]} scale={1.3} />} />
       <group position={[1.96, 0, -.55]} rotation={[0, -.32, 0]}>
         <RoundedBox args={[.85, .5, .42]} radius={.035} position={[0, .31, 0]} castShadow><meshStandardMaterial color="#70533c" roughness={.65} /></RoundedBox>
         <Box at={[0, .98, 0]} size={[1.12, .67, .065]} color="#161a1c" />
@@ -87,7 +88,7 @@ export function RoomArchitecture({ room, daylight, firstPerson }: { room: number
       {Array.from({ length: 17 }, (_, i) => <Box key={i} at={[-2.75 + i * .075, 1.4, -2.88]} size={[.035, 2.6, .08]} color="#a98a65" />)}
     </>}
     {room === 3 && <>
-      <group position={[-1.85, 1.8, -2.88]}>{[.38, .31, .23, .13, .045].map((r, i) => <mesh key={r} position={[0, 0, i * .008]}><circleGeometry args={[r, 40]} /><meshStandardMaterial color={["#292b27", "#c2af83", "#46594d", "#c2af83", "#964f39"][i]} /></mesh>)}</group>
+      <Prop id="dartboard" at={[-1.85, 1.8, -2.96]} fallback={<group position={[-1.85, 1.8, -2.88]}>{[.38, .31, .23, .13, .045].map((r, i) => <mesh key={r} position={[0, 0, i * .008]}><circleGeometry args={[r, 40]} /><meshStandardMaterial color={["#292b27", "#c2af83", "#46594d", "#c2af83", "#964f39"][i]} /></mesh>)}</group>} />
       <Box at={[1.05, .43, -2.48]} size={[.6, .86, .57]} color="#737b7c" />
       <Box at={[1.24, .65, -2.18]} size={[.035, .23, .04]} color="#dadbd1" />
 

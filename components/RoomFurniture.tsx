@@ -3,6 +3,7 @@
 import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
+import { Prop } from "./RoomProps";
 
 type V3 = [number, number, number];
 type Surface = "oak" | "walnut" | "linen" | "cream" | "metal" | "brass" | "stone" | "felt" | "red" | "rubber";
@@ -71,13 +72,15 @@ function Sofa() {
 function Living() {
   return <group>
     <Sofa />
-    <group position={[-.5, 0, -.65]}>
+    <Prop id="mid_century_lounge_chair" at={[-1.95, 0, .2]} rotation={2.2} />
+    <Prop id="modern_coffee_table_01" at={[-.5, 0, -.8]} rotation={Math.PI / 2} fallback={<group position={[-.5, 0, -.65]}>
       <Solid at={[0, .43, 0]} size={[1.25, .065, .65]} surface="walnut" radius={.03} />
       {[-.47, .47].flatMap(x => [-.22, .22].map(z => <Rod key={`${x}-${z}`} from={[x * 1.15, .02, z * 1.1]} to={[x, .40, z]} radius={.025} surface="walnut" />))}
       <Solid at={[-.25, .48, .04]} size={[.33, .035, .25]} surface="linen" radius={.005} />
       <Solid at={[-.23, .514, .02]} size={[.29, .025, .23]} rotation={[0, .14, 0]} surface="felt" radius={.005} />
       <Vessel at={[.31, .465, -.06]} scale={.42} />
-    </group>
+    </group>} />
+    <Prop id="potted_plant_04" at={[-.18, .39, -.72]} />
     <Disc at={[1.4, .025, -2.2]} radius={.22} height={.05} surface="metal" />
     <Rod from={[1.4, .05, -2.2]} to={[1.4, 1.68, -2.2]} radius={.016} surface="brass" />
     <mesh position={[1.4, 1.65, -2.2]} castShadow><cylinderGeometry args={[.19, .30, .38, 48, 1, true]} /><meshStandardMaterial color="#ecdfc4" roughness={.95} emissive="#ffd49a" emissiveIntensity={.12} side={THREE.DoubleSide} /></mesh>
@@ -103,12 +106,13 @@ function Garage() {
     <Solid at={[-1.25, .9, -2.48]} size={[2.62, .085, .68]} surface="oak" radius={.018} />
     <Solid at={[-1.25, .21, -2.48]} size={[.9, .045, .48]} surface="metal" />
     <DrawerCabinet at={[.92, 0, -2.42]} width={.85} red />
-    <group position={[-1.9, .96, -2.4]}>
+    <Prop id="metal_toolbox" at={[-1.9, .943, -2.45]} rotation={.15} fallback={<group position={[-1.9, .96, -2.4]}>
       <Solid at={[0, .04, 0]} size={[.28, .08, .22]} surface="metal" />
       <Solid at={[0, .14, -.04]} size={[.19, .14, .09]} surface="red" />
       <Solid at={[0, .14, .09]} size={[.19, .14, .05]} surface="metal" />
       <Rod from={[-.19, .1, .18]} to={[.19, .1, .18]} radius={.012} surface="brass" />
-    </group>
+    </group>} />
+    <Prop id="tire_pump" at={[-1.72, 0, 1.55]} rotation={.5} />
     <group position={[-2.68, 0, -.8]}>
       {[-.22, .22].flatMap(x => [-.32, .32].map(z => <Solid key={`${x}-${z}`} at={[x, .93, z]} size={[.035, 1.86, .035]} surface="metal" radius={.003} />))}
       {[.18, .72, 1.26, 1.8].map(y => <Solid key={y} at={[0, y, 0]} size={[.5, .035, .7]} surface="metal" radius={.003} />)}
@@ -119,11 +123,14 @@ function Garage() {
 
 function Showroom() {
   return <group>
+    <Prop id="modern_arm_chair_01" at={[-2.2, 0, .9]} rotation={1.3} />
     {[-1.65, 1.45].map((x, i) => <group key={x} position={[x, 0, -1.7]}>
       <Solid at={[0, .055, 0]} size={[.83, .11, .83]} surface="metal" />
       <Solid at={[0, .54, 0]} size={[.78, .9, .78]} surface="stone" radius={.025} />
       <Solid at={[0, 1.005, 0]} size={[.82, .04, .82]} surface="cream" />
-      {i === 0 ? <Vessel at={[0, 1.03, 0]} scale={1.25} /> : <mesh position={[0, 1.39, 0]} rotation={[.15, .25, .3]} castShadow><torusGeometry args={[.23, .065, 20, 64]} /><meshStandardMaterial color="#b08a51" metalness={.75} roughness={.24} /></mesh>}
+      {i === 0
+        ? <Prop id="ceramic_vase_01" at={[0, 1.025, 0]} scale={1.3} fallback={<Vessel at={[0, 1.03, 0]} scale={1.25} />} />
+        : <Prop id="ceramic_vase_03" at={[0, 1.025, 0]} scale={1.4} fallback={<mesh position={[0, 1.39, 0]} rotation={[.15, .25, .3]} castShadow><torusGeometry args={[.23, .065, 20, 64]} /><meshStandardMaterial color="#b08a51" metalness={.75} roughness={.24} /></mesh>} />}
       <Solid at={[0, .91, .421]} size={[.21, .055, .006]} surface="brass" radius={.002} />
     </group>)}
     <group position={[0, 0, 1.25]}>
@@ -135,6 +142,8 @@ function Showroom() {
 
 function Basement() {
   return <group>
+    <Prop id="metal_stool_01" at={[-2.45, 0, -1.8]} rotation={.4} />
+    <Prop id="metal_stool_01" at={[-1.5, 0, -1.85]} rotation={-.3} />
     <group position={[-.15, 0, -.55]}>
       {[-.9, .9].flatMap(x => [-.49, .49].map(z => <Solid key={`${x}-${z}`} at={[x, .33, z]} size={[.15, .66, .15]} surface="walnut" radius={.025} />))}
       <Solid at={[0, .65, 0]} size={[2.35, .23, 1.3]} surface="walnut" radius={.05} />
@@ -168,12 +177,12 @@ function OutdoorChair({ at, angle }: { at: V3; angle: number }) {
 
 function Patio() {
   return <group>
-    <group position={[-.55, 0, -.7]}>
+    <Prop id="outdoor_table_chair_set_01" at={[-.55, 0, -.7]} fallback={<><group position={[-.55, 0, -.7]}>
       {Array.from({ length: 9 }, (_, i) => <Solid key={i} at={[-.56 + i * .14, .75, 0]} size={[.126, .045, .9]} surface="oak" radius={.008} />)}
       {[-.48, .48].flatMap(x => [-.32, .32].map(z => <Rod key={`${x}-${z}`} from={[x * 1.1, .02, z * 1.1]} to={[x, .73, z]} radius={.027} surface="metal" />))}
       <Vessel at={[0, .78, 0]} scale={.42} color="#b1b7a2" />
-    </group>
-    <OutdoorChair at={[-.55, 0, .35]} angle={Math.PI} /><OutdoorChair at={[-.55, 0, -1.75]} angle={0} />
+    </group><OutdoorChair at={[-.55, 0, .35]} angle={Math.PI} /><OutdoorChair at={[-.55, 0, -1.75]} angle={0} /></>} />
+    <Prop id="planter_box_01" at={[.2, 0, -2.68]} />
     <group position={[2, 0, -2.3]}>
       <Solid at={[0, .46, 0]} size={[.9, .7, .5]} surface="metal" radius={.04} />
       <Solid at={[0, .85, 0]} size={[1.04, .1, .6]} surface="metal" radius={.025} />
