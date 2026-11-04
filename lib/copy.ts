@@ -43,7 +43,6 @@ const en = {
   hero: {
     meta: ["110% COATINGS", "CRAFT / COLOR / CONCRETE"], overline: "A DIFFERENT KIND OF FLOOR COMPANY",
     title: ["We create surfaces", "that change the", "way you feel."], cta: "Start your transformation",
-    stirPointer: "Move across the pour to stir it", stirTouch: "Drag across the pour to stir it",
     taglines: [["Made for your space.", "Built around your vision."], ["Design-led finishes.", "Detail-driven application."], ["Residential, commercial,", "and anything but ordinary."]],
     scroll: "Explore selected work",
   },
@@ -186,7 +185,6 @@ const es: Copy = {
   hero: {
     meta: ["110% COATINGS", "OFICIO / COLOR / CONCRETO"], overline: "UNA EMPRESA DE PISOS DIFERENTE",
     title: ["Creamos superficies", "que cambian cómo", `se siente su${nbsp}espacio.`], cta: "Comience su transformación",
-    stirPointer: "Pase el cursor sobre el vertido para moverlo", stirTouch: "Deslice sobre el vertido para moverlo",
     taglines: [["Hecho para su espacio.", "Pensado para su visión."], ["Acabados con diseño.", "Aplicación al detalle."], ["Residencial, comercial", "y nada ordinario."]],
     scroll: "Ver proyectos destacados",
   },

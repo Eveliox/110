@@ -27,9 +27,6 @@
 .flow-headline h1 { -webkit-box-reflect: below -.12em linear-gradient(transparent 76%,#ffffff24); }
 @media (max-width: 650px) { .flow-headline h1 { -webkit-box-reflect: initial; } }
 .flow-headline > .flow-pill { margin-top: 62px; backdrop-filter: blur(6px); }
-.flow-stir-hint { display: block; margin-top: 22px; font: 8px ui-monospace,monospace; letter-spacing: .14em; text-transform: uppercase; color: #ffffffa0; }
-.flow-stir-hint .hint-touch { display: none; }
-@media (hover: none) { .flow-stir-hint .hint-pointer { display: none; } .flow-stir-hint .hint-touch { display: inline; } }
 
 /* Floor studio: the swatch choice is broadcast to the whole page. */
 .studio-wearing { margin-top: 14px; font-size: 10px; line-height: 1.7; color: #b9adbf; }

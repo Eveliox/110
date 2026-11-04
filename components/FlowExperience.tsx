@@ -20,7 +20,6 @@ export function FlowExperience() {
         <span className="flow-overline">{c.hero.overline}</span>
         <h1 id="flow-heading">{c.hero.title[0]}<br />{c.hero.title[1]}<br /><span>{c.hero.title[2]}</span></h1>
         <Link className="flow-pill" href="#quote">{c.hero.cta} <ArrowUpRight size={15} /></Link>
-        <span className="flow-stir-hint" aria-hidden="true"><span className="hint-pointer">{c.hero.stirPointer}</span><span className="hint-touch">{c.hero.stirTouch}</span></span>
       </div>
       <div className="container flow-hero-footer">{c.hero.taglines.map(([line, soft]) => <p key={line}>{line}<br /><span>{soft}</span></p>)}<a href="#work" className="flow-scroll" aria-label={c.hero.scroll}><ArrowDown size={28} /></a></div>
     </section>
