@@ -8,7 +8,11 @@ import "./pour.css";
 import "./materials.css";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], style: ["normal", "italic"], axes: ["wdth"], display: "swap" });
+// Absolute base for social preview images. Set NEXT_PUBLIC_SITE_URL to the live domain.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
 export const metadata: Metadata = {
+    metadataBase: new URL(siteUrl),
     title: "110% Coatings | A better floor starts here",
     description: "Explore epoxy flake, metallic epoxy and concrete finishes for residential and commercial spaces. See the work. Plan your floor.",
     icons: { icon: "/icon.svg" },
