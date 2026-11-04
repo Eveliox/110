@@ -9,6 +9,7 @@ import { floorSystems, resolveLighting, roomNames, sheenNames, type FloorSystem,
 
 const clampIndex = (value: number, length: number) => (Number.isFinite(value) && value >= 0 && value < length ? Math.floor(value) : -1);
 import { INSTALL_DURATION_MS } from "@/lib/install-sequence";
+import { estimate, estimatorVisible, pricing, roomAreas } from "@/lib/pricing";
 import { useAtmosphere } from "./SiteAtmosphere";
 
 export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: FloorSystem }) {
@@ -16,6 +17,9 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const [color, setColor] = useState(0);
   const [sheen, setSheen] = useState(2);
   const [room, setRoom] = useState(0);
+  // Follows the room's typical size until the visitor sets their own.
+  const [customArea, setCustomArea] = useState<number | null>(null);
+  const area = customArea ?? roomAreas[room];
   const [daylight, setDaylight] = useState(0.33);
   const [yaw, setYaw] = useState(23);
   const [elevation, setElevation] = useState(39);
@@ -43,9 +47,9 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
     const parsedColor = params.has("fc") ? clampIndex(Number(params.get("fc")), 4) : -1;
     // A shared link arrives already dressed in the shared finish.
     if (fsIdx >= 0 || parsedColor >= 0) choose(fsIdx >= 0 ? fsIdx : Math.max(0, floorSystems.findIndex(s => s.id === initialSystem)), Math.max(0, parsedColor));
-    const parsedSheen = clampIndex(Number(params.get("fsh")), sheenNames.length);
+    const parsedSheen = params.has("fsh") ? clampIndex(Number(params.get("fsh")), sheenNames.length) : -1;
     if (parsedSheen >= 0) setSheen(parsedSheen);
-    const parsedRoom = clampIndex(Number(params.get("fr")), roomNames.length);
+    const parsedRoom = params.has("fr") ? clampIndex(Number(params.get("fr")), roomNames.length) : -1;
     if (parsedRoom >= 0) setRoom(parsedRoom);
     const dl = Number(params.get("fl"));
     if (Number.isFinite(dl) && dl >= 0 && dl <= 1) setDaylight(dl);
@@ -58,7 +62,8 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const finish = floorSystems[system];
   const blend = finish.colors[color];
   const lighting = resolveLighting(daylight);
-  const selection: FloorSelection = { system: finish.id, finish: finish.name, color: blend.name, sheen: sheenNames[sheen], room: roomNames[room] };
+  const selection: FloorSelection = { system: finish.id, finish: finish.name, color: blend.name, sheen: sheenNames[sheen], room: roomNames[room], ...(estimatorVisible && { area }) };
+  const [priceLow, priceHigh] = estimate(finish.id, area);
   const resetView = () => { setYaw(23); setElevation(39); setZoom(10); };
 
   const buildShareUrl = () => {
@@ -176,6 +181,13 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
               <span>Overcast</span><span>Noon</span><span>Sunset</span><span>Night</span>
             </div>
           </fieldset>
+          {estimatorVisible && <fieldset className="studio-estimate">
+            <legend><span>04</span> Ballpark the price</legend>
+            <span className="studio-control-label studio-daylight-label">Floor area<output>{area.toLocaleString("en-US")} sq ft</output></span>
+            <input type="range" min={100} max={3000} step={25} value={area} onChange={e=>setCustomArea(Number(e.target.value))} className="studio-daylight-slider" aria-label="Floor area in square feet" />
+            <p className="studio-estimate-figure" aria-live="polite"><strong>${priceLow.toLocaleString("en-US")} – ${priceHigh.toLocaleString("en-US")}</strong><small>{finish.name}, installed</small></p>
+            <p className="studio-estimate-note">{!pricing.confirmed && <b>Sample prices · only shown in development</b>}A ballpark, not a quote. Slab condition, repairs and prep set the final price after a free site visit.</p>
+          </fieldset>}
           <button className="studio-use-design" onClick={useDesign}>I like this look <ArrowUpRight size={18}/></button>
           <button className="studio-request-sample" onClick={requestSample}><Mail size={14} />Request a free 4×4 sample</button>
           <p className="studio-notice" role="status">{notice}</p>

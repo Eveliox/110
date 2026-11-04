@@ -236,3 +236,8 @@
   .studio-system-options button { font-size: 12px; padding: 13px; }
   .studio-disclaimer { font-size: 9px; padding-inline: 6px; }
 }
+.studio-estimate-figure { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; }
+.studio-estimate-figure strong { font-size: 26px; font-weight: 400; letter-spacing: -.03em; color: #fff; }
+.studio-estimate-figure small { font-size: 10px; color: #b9adbf; }
+.studio-estimate-note { margin-top: 10px; font-size: 10px; line-height: 1.7; color: #a99cae; }
+.studio-estimate-note b { display: block; margin-bottom: 4px; font: 500 8px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; color: #f2b84b; }
