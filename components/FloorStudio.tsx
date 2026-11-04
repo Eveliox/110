@@ -11,6 +11,7 @@ const clampIndex = (value: number, length: number) => (Number.isFinite(value) &&
 import { INSTALL_DURATION_MS } from "@/lib/install-sequence";
 import { estimate, estimatorVisible, pricing, roomAreas } from "@/lib/pricing";
 import { useAtmosphere } from "./SiteAtmosphere";
+import { ArButton } from "./ArButton";
 
 export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: FloorSystem }) {
   const [system, setSystem] = useState(Math.max(0, floorSystems.findIndex(s => s.id === initialSystem)));
@@ -158,6 +159,7 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
             <div className="studio-preview-actions">
               <button onClick={playInstall} aria-pressed={installProgress !== null} className={installProgress !== null ? "selected" : ""}>{installProgress !== null ? <Pause size={14} /> : <Play size={14} />}{installProgress !== null ? "Stop" : "Play install"}</button>
               <button onClick={share} aria-label="Share this look"><Share2 size={15} />Share</button>
+              <ArButton finish={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} label={`${blend.name} · ${finish.name}`} onNotice={setNotice} />
               <button onClick={()=>{if(exportRef.current){exportRef.current();setNotice("Your concept preview has been downloaded.");}else setNotice("Image saving needs 3D support in your browser. You can still use this design in your project brief.");}}><Download size={16} />Save preview</button>
             </div>
           </div>}
