@@ -48,3 +48,8 @@
 @media (prefers-reduced-motion: reduce) {
   .site-shell,.pour-field,.pour-field canvas { transition: none; }
 }
+
+.sound-toggle { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 1px solid #ffffff40; border-radius: 30px; background: #0b0910b3; backdrop-filter: blur(10px); color: #f1e9f4; font: 9px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; }
+.sound-toggle:hover { border-color: var(--tone-glow); }
+.sound-toggle[aria-pressed="true"] { border-color: var(--tone-soft); color: #fff; }
+@media (max-width: 550px) { .sound-toggle span { display: none; } .sound-toggle { padding: 0 11px; right: 14px; bottom: 14px; } }

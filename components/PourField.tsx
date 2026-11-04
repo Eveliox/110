@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { hexToRgb, type Palette } from "@/lib/atmosphere";
+import { sound } from "@/lib/sound";
 
 const vertex = `
 attribute vec2 position;
@@ -229,6 +230,7 @@ export function PourField({ paused, palette }: { paused: boolean; palette: Palet
       const x = event.clientX / window.innerWidth, y = 1 - event.clientY / window.innerHeight;
       const now = performance.now();
       if (now - state.lastPointerAt < 120) {
+        sound.stir(Math.hypot(x - state.pointer[0], y - state.pointer[1]) / Math.max(.008, (now - state.lastPointerAt) / 1000));
         state.velocity[0] += Math.max(-.6, Math.min(.6, (x - state.pointer[0]) * 9));
         state.velocity[1] += Math.max(-.6, Math.min(.6, (y - state.pointer[1]) * 9));
       }

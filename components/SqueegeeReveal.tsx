@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Sparkles } from "lucide-react";
+import { sound } from "@/lib/sound";
 
 // One original stacked comparison photo: the raw slab above, the finished metallic floor below,
 // shot from nearly the same spot so the two halves register.
@@ -32,7 +33,7 @@ export function SqueegeeReveal() {
     layers.probe.width = 64; layers.probe.height = 32;
     let width = 0, height = 0, ratio = 1, frame = 0, inView = false, dirty = true;
     let blade: { at: Point; angle: number; visible: boolean } = { at: { x: 0, y: 0 }, angle: 0, visible: false };
-    let readyForDemo = false, dragging = false, last: Point | null = null, lastAngle = 0, wetUntil = 0, demoPlayed = false, sweep: { t0: number } | null = null, strokes = 0;
+    let readyForDemo = false, lastMoveAt = 0, dragging = false, last: Point | null = null, lastAngle = 0, wetUntil = 0, demoPlayed = false, sweep: { t0: number } | null = null, strokes = 0;
 
     // Crop a source half to the canvas aspect, like object-fit: cover.
     const paintHalf = (target: HTMLCanvasElement, rect: typeof BEFORE) => {
@@ -82,6 +83,9 @@ export function SqueegeeReveal() {
         while (target - lastAngle > Math.PI / 2) target -= Math.PI;
         while (target - lastAngle < -Math.PI / 2) target += Math.PI;
         const angle = lastAngle + (target - lastAngle) * .35;
+        const now = performance.now();
+        sound.squeegee(Math.hypot(dx, dy) / ratio / Math.max(4, now - lastMoveAt));
+        lastMoveAt = now;
         pull(last, to, lastAngle, angle);
         lastAngle = angle;
         if (++strokes % 8 === 0) measure();

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { PourField } from "./PourField";
+import { SoundToggle } from "./SoundToggle";
 import { brandPalette, brandTones, finishPalette, finishTones, type Palette } from "@/lib/atmosphere";
 
 export type WornFinish = { name: string; system: number; base: string; accent: string };
@@ -21,6 +22,7 @@ export function SiteAtmosphere({ children }: { children: ReactNode }) {
     <div className="site-shell" style={{ "--tone-soft": tones.soft, "--tone-em": tones.em, "--tone-glow": tones.glow } as CSSProperties}>
       <div className="site-atmosphere" aria-hidden="true"><PourField paused={paused} palette={palette} /></div>
       {children}
+      <SoundToggle />
     </div>
   </AtmosphereContext.Provider>;
 }

@@ -6,6 +6,7 @@ import { finishes } from "@/lib/design";
 import { floorSystems } from "@/lib/floor-studio";
 import { buildSampleCanvas } from "@/lib/finish-texture";
 import { useAtmosphere } from "./SiteAtmosphere";
+import { sound } from "@/lib/sound";
 
 const systemFor = (slug: string) => slug === "metallic-epoxy" ? 0 : slug === "epoxy-flake" ? 1 : 2;
 const clamp = (v: number) => Math.max(-1, Math.min(1, v));
@@ -111,12 +112,12 @@ export function SampleDeck({ active, onSelect }: { active: number; onSelect: (in
           key={f.slug} ref={el => { chips.current[i] = el; }}
           id={"finish-tab-" + i} role="tab" aria-selected={active === i} aria-controls="finish-display" tabIndex={active === i ? 0 : -1}
           className={`sample-chip ${active === i ? "active" : ""}`} data-system={way.system}
-          onClick={() => onSelect(i)}
+          onClick={() => { onSelect(i); sound.tap(); }}
           onKeyDown={(e) => {
             if (!["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"].includes(e.key)) return;
             e.preventDefault();
             const next = e.key === "Home" ? 0 : e.key === "End" ? finishes.length - 1 : (active + (e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1) + finishes.length) % finishes.length;
-            onSelect(next); document.getElementById("finish-tab-" + next)?.focus();
+            onSelect(next); sound.tap(); document.getElementById("finish-tab-" + next)?.focus();
           }}
         >
           <span className="chip-lift">
