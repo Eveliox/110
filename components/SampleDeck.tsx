@@ -6,7 +6,7 @@ import { finishes } from "@/lib/design";
 import { floorSystems } from "@/lib/floor-studio";
 import { buildSampleCanvas } from "@/lib/finish-texture";
 import { useAtmosphere } from "./SiteAtmosphere";
-import { sound } from "@/lib/sound";
+import { useCopy } from "./LangProvider";
 
 const systemFor = (slug: string) => slug === "metallic-epoxy" ? 0 : slug === "epoxy-flake" ? 1 : 2;
 const clamp = (v: number) => Math.max(-1, Math.min(1, v));
@@ -22,6 +22,7 @@ export function SampleDeck({ active, onSelect }: { active: number; onSelect: (in
   const listenToTilt = useRef<() => void>(() => {});
   const [faces, setFaces] = useState<Record<string, string>>({});
   const [tiltGranted, setTiltGranted] = useState(false);
+  const c = useCopy();
   useEffect(() => { activeRef.current = active; }, [active]);
 
   // Each chip shows the blend picked in the studio when it's that finish, otherwise the house blend.
@@ -104,7 +105,7 @@ export function SampleDeck({ active, onSelect }: { active: number; onSelect: (in
   };
 
   return <>
-    <div className="sample-deck" role="tablist" aria-label="Explore floor finishes" ref={deckRef}>
+    <div className="sample-deck" role="tablist" aria-label={c.library.deck} ref={deckRef}>
       {finishes.map((f, i) => {
         const way = colorways[i];
         const face = faces[way.key];
@@ -112,28 +113,28 @@ export function SampleDeck({ active, onSelect }: { active: number; onSelect: (in
           key={f.slug} ref={el => { chips.current[i] = el; }}
           id={"finish-tab-" + i} role="tab" aria-selected={active === i} aria-controls="finish-display" tabIndex={active === i ? 0 : -1}
           className={`sample-chip ${active === i ? "active" : ""}`} data-system={way.system}
-          onClick={() => { onSelect(i); sound.tap(); }}
+          onClick={() => onSelect(i)}
           onKeyDown={(e) => {
             if (!["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"].includes(e.key)) return;
             e.preventDefault();
             const next = e.key === "Home" ? 0 : e.key === "End" ? finishes.length - 1 : (active + (e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1) + finishes.length) % finishes.length;
-            onSelect(next); sound.tap(); document.getElementById("finish-tab-" + next)?.focus();
+            onSelect(next); document.getElementById("finish-tab-" + next)?.focus();
           }}
         >
           <span className="chip-lift">
             <span className="chip-body" style={{ "--chip-base": way.base, "--chip-accent": way.accent } as CSSProperties}>
               <span className="chip-face" style={face ? { backgroundImage: `url(${face})` } : undefined} />
               <span className="chip-sheen" />
-              <span className="chip-stamp">110% · 4×4 SAMPLE</span>
+              <span className="chip-stamp">{c.library.stamp}</span>
             </span>
           </span>
-          <span className="chip-caption"><span className="finish-index">0{i + 1}</span><strong>{f.name}</strong><small>{f.label}</small></span>
+          <span className="chip-caption"><span className="finish-index">0{i + 1}</span><strong>{c.finishes[i].name}</strong><small>{c.finishes[i].label}</small></span>
         </button>;
       })}
     </div>
     <p className="sample-hint">
-      <span className="hint-pointer">Move your cursor to tilt the sample under the light.</span>
-      {!tiltGranted && <button className="hint-touch" onClick={enableTilt}><Smartphone size={13} />Tilt your phone to catch the light</button>}
+      <span className="hint-pointer">{c.library.tiltPointer}</span>
+      {!tiltGranted && <button className="hint-touch" onClick={enableTilt}><Smartphone size={13} />{c.library.tiltTouch}</button>}
     </p>
   </>;
 }

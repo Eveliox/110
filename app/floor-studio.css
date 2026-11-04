@@ -183,7 +183,7 @@
   .menu-button { width: 44px; height: 44px; display: grid; place-items: center; }
   .nav-actions { padding-top: 0; }
   .nav-actions .button { min-height: 44px; align-items: center; }
-  .flow-motion,.flow-scroll,.flow-carousel-controls > button { min-width: 44px; min-height: 44px; }
+  .flow-scroll,.flow-carousel-controls > button { min-width: 44px; min-height: 44px; }
   .flow-hero-footer { grid-template-columns: 44px 1fr 1fr 44px; }
   .studio-preview-top > button,.studio-preview-summary button,.studio-camera summary,.studio-system-options button,.studio-segments button,.studio-mode-tabs button,.photo-action-ghost,.photo-action-primary { min-height: 44px; }
   .studio-mode-tabs { flex: 1; }

@@ -23,17 +23,17 @@ export const floorSystems = [
 export const roomNames = ["Living space", "Garage", "Showroom", "Basement", "Patio"] as const;
 export const sheenNames = ["Matte", "Satin", "Gloss"] as const;
 export const lightingStops = [
-  { label: "Overcast", bg: "#1b1e24", directional: "#c7d5e3", directionalIntensity: 0.9, ambient: "#9fb0c4", ambientIntensity: 0.75, hemi: "#dbe3ed", wallTint: "#d8d9db", keyLight: "#eef2f8", keyIntensity: 1.6 },
-  { label: "Noon", bg: "#191620", directional: "#fff5e8", directionalIntensity: 1.9, ambient: "#f3ecd9", ambientIntensity: 0.55, hemi: "#eaf1f8", wallTint: "#e7e6e4", keyLight: "#ffffff", keyIntensity: 2.6 },
-  { label: "Sunset", bg: "#1d1620", directional: "#ffb878", directionalIntensity: 1.4, ambient: "#f8c9a0", ambientIntensity: 0.6, hemi: "#ffd7a3", wallTint: "#e9d6bd", keyLight: "#ffd3a0", keyIntensity: 2.3 },
-  { label: "Night", bg: "#0d0b11", directional: "#5b4a6c", directionalIntensity: 0.35, ambient: "#3f3752", ambientIntensity: 0.4, hemi: "#2a2432", wallTint: "#2f2b35", keyLight: "#fff2d4", keyIntensity: 1.6 },
+  { label: "Overcast", bg: "#1b1e24", directional: "#c7d5e3", directionalIntensity: 0.9, ambient: "#9fb0c4", ambientIntensity: 0.5, hemi: "#dbe3ed", wallTint: "#d8d9db", keyLight: "#eef2f8", keyIntensity: 1.6, windowLight: 46 },
+  { label: "Noon", bg: "#191620", directional: "#fff5e8", directionalIntensity: 1.9, ambient: "#f3ecd9", ambientIntensity: 0.55, hemi: "#eaf1f8", wallTint: "#e7e6e4", keyLight: "#ffffff", keyIntensity: 2.6, windowLight: 30 },
+  { label: "Sunset", bg: "#1d1620", directional: "#ffb878", directionalIntensity: 1.4, ambient: "#f8c9a0", ambientIntensity: 0.6, hemi: "#ffd7a3", wallTint: "#e9d6bd", keyLight: "#ffd3a0", keyIntensity: 2.3, windowLight: 24 },
+  { label: "Night", bg: "#0d0b11", directional: "#5b4a6c", directionalIntensity: 0.35, ambient: "#3f3752", ambientIntensity: 0.4, hemi: "#2a2432", wallTint: "#2f2b35", keyLight: "#fff2d4", keyIntensity: 1.6, windowLight: 3 },
 ] as const;
 export type LightingColor = { r: number; g: number; b: number };
 const hexToRgb = (hex: string): LightingColor => ({ r: parseInt(hex.slice(1, 3), 16) / 255, g: parseInt(hex.slice(3, 5), 16) / 255, b: parseInt(hex.slice(5, 7), 16) / 255 });
 const rgbToHex = (c: LightingColor): string => `#${[c.r, c.g, c.b].map(v => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, "0")).join("")}`;
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const lerpColor = (a: LightingColor, b: LightingColor, t: number): LightingColor => ({ r: lerp(a.r, b.r, t), g: lerp(a.g, b.g, t), b: lerp(a.b, b.b, t) });
-export type ResolvedLighting = { bg: string; directional: string; directionalIntensity: number; ambient: string; ambientIntensity: number; hemi: string; wallTint: string; keyLight: string; keyIntensity: number; stopLabel: string };
+export type ResolvedLighting = { bg: string; directional: string; directionalIntensity: number; ambient: string; ambientIntensity: number; hemi: string; wallTint: string; keyLight: string; keyIntensity: number; windowLight: number; stopLabel: string; stopIndex: number };
 export function resolveLighting(daylight: number): ResolvedLighting {
   const clamped = Math.min(1, Math.max(0, daylight));
   const scaled = clamped * (lightingStops.length - 1);
@@ -54,19 +54,21 @@ export function resolveLighting(daylight: number): ResolvedLighting {
     wallTint: mix(a.wallTint, b.wallTint),
     keyLight: mix(a.keyLight, b.keyLight),
     keyIntensity: mixNum(a.keyIntensity, b.keyIntensity),
+    windowLight: mixNum(a.windowLight, b.windowLight),
     stopLabel: t < 0.5 ? a.label : b.label,
+    stopIndex: t < 0.5 ? lo : hi,
   };
 }
 export function colorVector(hex: string): [number, number, number] {
   return [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255];
 }
-export function selectionDescription(selection: FloorSelection) {
-  return `${selection.finish} / ${selection.color} / ${selection.sheen} / ${selection.room}${selection.area ? ` / ~${selection.area.toLocaleString("en-US")} sq ft` : ""}`;
+export function selectionDescription(selection: FloorSelection, unit = "sq ft") {
+  return `${selection.finish} / ${selection.color} / ${selection.sheen} / ${selection.room}${selection.area ? ` / ~${selection.area.toLocaleString("en-US")} ${unit}` : ""}`;
 }
 export function isFloorSelection(value: unknown): value is FloorSelection {
   if (!value || typeof value !== "object") return false;
   const v = value as FloorSelection;
-  const system = floorSystems.find(s => s.id === v.system && s.name === v.finish);
+  // Names arrive in the page's language, so check the shape rather than the English wording.
   if (v.area !== undefined && !(Number.isFinite(v.area) && v.area > 0)) return false;
-  return !!system && system.colors.some(c => c.name === v.color) && sheenNames.some(s => s === v.sheen) && roomNames.some(r => r === v.room);
+  return floorSystems.some(s => s.id === v.system) && [v.finish, v.color, v.sheen, v.room].every(text => typeof text === "string" && text.length > 0);
 }

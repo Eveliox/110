@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Download, Move, Share2, Trash2, Upload } from "lucide-react";
 import { buildFinishCanvas } from "@/lib/finish-texture";
+import { useCopy } from "./LangProvider";
 
 type Point = { x: number; y: number };
 type Corners = [Point, Point, Point, Point];
@@ -58,6 +59,7 @@ function drawWarpedTexture(ctx: CanvasRenderingContext2D, texture: HTMLCanvasEle
 }
 
 export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAppearance; finishLabel: string }) {
+  const c = useCopy().photo;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [corners, setCorners] = useState<Corners | null>(null);
@@ -107,16 +109,16 @@ export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAp
   useEffect(() => { render(); });
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/")) { setNotice("That doesn't look like an image. Try a JPG or PNG."); return; }
+    if (!file.type.startsWith("image/")) { setNotice(c.notImage); return; }
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       setImage(img);
       setCorners(DEFAULT_CORNERS(img.naturalWidth, img.naturalHeight));
-      setNotice("Drag the four handles to the corners of your floor.");
+      setNotice(c.corners);
       URL.revokeObjectURL(url);
     };
-    img.onerror = () => { setNotice("Couldn't load that image. Try another one."); URL.revokeObjectURL(url); };
+    img.onerror = () => { setNotice(c.loadFailed); URL.revokeObjectURL(url); };
     img.src = url;
   };
 
@@ -194,7 +196,7 @@ export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAp
     link.download = "110-coatings-my-space.png";
     link.href = temp.toDataURL("image/png");
     link.click();
-    setNotice("Saved. Share it with whoever needs to see it.");
+    setNotice(c.saved);
   };
 
   const sharePhoto = async () => {
@@ -213,8 +215,8 @@ export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAp
       if (!blob) throw new Error("blob");
       const file = new File([blob], "110-coatings-my-space.png", { type: "image/png" });
       if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My 110% Coatings floor" });
-        setNotice("Shared.");
+        await navigator.share({ files: [file], title: c.shareTitle });
+        setNotice(c.shared);
         return;
       }
     } catch { /* fall through */ }
@@ -240,9 +242,9 @@ export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAp
           <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
           <div className="photo-dropzone-inner">
             <Upload size={28} strokeWidth={1.5} />
-            <strong>Drop a photo of your space</strong>
-            <span>Garage, basement, living room — JPG or PNG, usually from your phone camera.</span>
-            <span className="photo-dropzone-hint">We render your chosen finish onto the floor so you can see it in your own space.</span>
+            <strong>{c.drop}</strong>
+            <span>{c.dropHint}</span>
+            <span className="photo-dropzone-hint">{c.dropNote}</span>
           </div>
         </label>
         {notice && <p className="photo-notice">{notice}</p>}
@@ -262,12 +264,12 @@ export function PhotoComposer({ appearance, finishLabel }: { appearance: PhotoAp
           onPointerCancel={stopDragging}
           onLostPointerCapture={stopDragging}
         />
-        <div className="photo-canvas-hint"><Move size={13} />Drag the numbered handles to the four corners of your floor</div>
+        <div className="photo-canvas-hint"><Move size={13} />{c.handles}</div>
       </div>
       <div className="photo-actions">
-        <button className="photo-action-ghost" onClick={clear}><Trash2 size={14} />Use a different photo</button>
-        <button className="photo-action-ghost" onClick={sharePhoto}><Share2 size={14} />Share</button>
-        <button className="photo-action-primary" onClick={exportPhoto}><Download size={16} />Save my photo</button>
+        <button className="photo-action-ghost" onClick={clear}><Trash2 size={14} />{c.another}</button>
+        <button className="photo-action-ghost" onClick={sharePhoto}><Share2 size={14} />{c.share}</button>
+        <button className="photo-action-primary" onClick={exportPhoto}><Download size={16} />{c.save}</button>
       </div>
       {notice && <p className="photo-notice">{notice}</p>}
     </div>

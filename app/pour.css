@@ -22,8 +22,10 @@
 .eyebrow,.flow-overline,.flow-headline > .flow-overline,.flow-project-description > .flow-overline { font-size: 9px; }
 .flow-hero-meta { color: #e4dde8b0; font-size: 8px; }
 
-/* The headline rests on wet resin and catches a faint reflection of itself. */
-.flow-headline h1 { -webkit-box-reflect: below -.12em linear-gradient(transparent 58%,#ffffff2e); }
+/* The headline rests on wet resin and catches a faint reflection of itself: only the first sliver,
+   so it reads as a sheen rather than a second line of text. Phones skip it. */
+.flow-headline h1 { -webkit-box-reflect: below -.12em linear-gradient(transparent 76%,#ffffff24); }
+@media (max-width: 650px) { .flow-headline h1 { -webkit-box-reflect: initial; } }
 .flow-headline > .flow-pill { margin-top: 62px; backdrop-filter: blur(6px); }
 .flow-stir-hint { display: block; margin-top: 22px; font: 8px ui-monospace,monospace; letter-spacing: .14em; text-transform: uppercase; color: #ffffffa0; }
 .flow-stir-hint .hint-touch { display: none; }
@@ -49,7 +51,3 @@
   .site-shell,.pour-field,.pour-field canvas { transition: none; }
 }
 
-.sound-toggle { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 1px solid #ffffff40; border-radius: 30px; background: #0b0910b3; backdrop-filter: blur(10px); color: #f1e9f4; font: 9px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; }
-.sound-toggle:hover { border-color: var(--tone-glow); }
-.sound-toggle[aria-pressed="true"] { border-color: var(--tone-soft); color: #fff; }
-@media (max-width: 550px) { .sound-toggle span { display: none; } .sound-toggle { padding: 0 11px; right: 14px; bottom: 14px; } }

@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import { ArrowUpRight, Camera, Check, Cuboid, Download, Footprints, Mail, Pause, Play, RotateCcw, Share2, SlidersHorizontal, Sunrise } from "lucide-react";
-const FloorRoom = dynamic(() => import("./FloorRoom").then(m => m.FloorRoom), { ssr: false, loading: () => <div className="floor-room"><div className="room-fallback"><p>Preparing your room preview…</p></div><div className="room-badge">LOADING PREVIEW</div></div> });
-const PhotoComposer = dynamic(() => import("./PhotoComposer").then(m => m.PhotoComposer), { ssr: false, loading: () => <div className="photo-composer"><div className="photo-dropzone"><div className="photo-dropzone-inner"><strong>Loading…</strong></div></div></div> });
+function RoomLoading() { const c = useCopy(); return <div className="floor-room"><div className="room-fallback"><p>{c.studio.preparing}</p></div><div className="room-badge">{c.studio.loading}</div></div>; }
+function PhotoLoading() { const c = useCopy(); return <div className="photo-composer"><div className="photo-dropzone"><div className="photo-dropzone-inner"><strong>{c.studio.loadingShort}</strong></div></div></div>; }
+const FloorRoom = dynamic(() => import("./FloorRoom").then(m => m.FloorRoom), { ssr: false, loading: () => <RoomLoading /> });
+const PhotoComposer = dynamic(() => import("./PhotoComposer").then(m => m.PhotoComposer), { ssr: false, loading: () => <PhotoLoading /> });
 import { floorSystems, resolveLighting, roomNames, sheenNames, type FloorSystem, type FloorSelection } from "@/lib/floor-studio";
 
 const clampIndex = (value: number, length: number) => (Number.isFinite(value) && value >= 0 && value < length ? Math.floor(value) : -1);
@@ -12,6 +14,7 @@ import { INSTALL_DURATION_MS } from "@/lib/install-sequence";
 import { estimate, estimatorVisible, pricing, roomAreas } from "@/lib/pricing";
 import { useAtmosphere } from "./SiteAtmosphere";
 import { ArButton } from "./ArButton";
+import { useCopy } from "./LangProvider";
 
 export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: FloorSystem }) {
   const [system, setSystem] = useState(Math.max(0, floorSystems.findIndex(s => s.id === initialSystem)));
@@ -33,12 +36,14 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const installRaf = useRef<number | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
   const { finish: worn, wear, palette } = useAtmosphere();
+  const c = useCopy();
+  const s = c.studio;
   // Picking a blend dresses the whole site in it (see SiteAtmosphere).
   const choose = useCallback((nextSystem: number, nextColor: number) => {
     setSystem(nextSystem); setColor(nextColor);
     const picked = floorSystems[nextSystem].colors[nextColor];
-    wear({ name: `${picked.name} ${floorSystems[nextSystem].name.toLowerCase()}`, system: nextSystem, base: picked.base, accent: picked.accent });
-  }, [wear]);
+    wear({ name: c.studio.wornName(c.systems[nextSystem].colors[nextColor], c.systems[nextSystem].name), system: nextSystem, base: picked.base, accent: picked.accent });
+  }, [wear, c]);
 
   // Hydrate a shared design only after mount, preserving the server-rendered defaults.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -63,7 +68,11 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const finish = floorSystems[system];
   const blend = finish.colors[color];
   const lighting = resolveLighting(daylight);
-  const selection: FloorSelection = { system: finish.id, finish: finish.name, color: blend.name, sheen: sheenNames[sheen], room: roomNames[room], ...(estimatorVisible && { area }) };
+  // Shown names come from the copy in the page's language; ids, colors and indices from lib/floor-studio.
+  const finishName = c.systems[system].name, blendName = c.systems[system].colors[color], sheenName = c.sheens[sheen], lightName = c.lighting[lighting.stopIndex];
+  // The quote form lists finishes by their library names, so pass the matching one.
+  const formFinish = c.finishes[finish.id === "flake" ? 0 : finish.id === "metallic" ? 1 : 2].name;
+  const selection: FloorSelection = { system: finish.id, finish: formFinish, color: blendName, sheen: sheenName, room: c.rooms[room], ...(estimatorVisible && { area }) };
   const [priceLow, priceHigh] = estimate(finish.id, area);
   const resetView = () => { setYaw(23); setElevation(39); setZoom(10); };
 
@@ -77,30 +86,30 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const useDesign = () => {
     window.dispatchEvent(new CustomEvent<FloorSelection>("floor-studio-selection", { detail: selection }));
     scrollToQuote();
-    setNotice("Your selected look has been added to the project form below.");
+    setNotice(s.used);
   };
 
   const requestSample = () => {
     window.dispatchEvent(new CustomEvent<FloorSelection>("floor-studio-sample", { detail: selection }));
     scrollToQuote();
-    setNotice("We've prefilled the form for a free 4×4 sample — just add your address.");
+    setNotice(s.sampleSet);
   };
 
   const share = async () => {
     const url = buildShareUrl();
-    const payload = { title: "110% Coatings · Floor Studio", text: `${blend.name} · ${finish.name} / ${sheenNames[sheen]}`, url };
+    const payload = { title: s.shareTitle, text: `${blendName} · ${finishName} / ${sheenName}`, url };
     try {
       if (typeof navigator.share === "function") {
         await navigator.share(payload);
-        setNotice("Shared.");
+        setNotice(s.shared);
         return;
       }
     } catch { /* user cancelled */ }
     try {
       await navigator.clipboard.writeText(url);
-      setNotice("Shareable link copied — paste it anywhere.");
+      setNotice(s.copied);
     } catch {
-      setNotice(`Copy this link: ${url}`);
+      setNotice(s.copyThis(url));
     }
   };
 
@@ -123,14 +132,14 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
         installHold.current = setTimeout(() => { setInstallProgress(null); installHold.current = null; }, 1800);
       }
     };
-    setNotice("Playing a 110% install — bare concrete to sealed topcoat.");
+    setNotice(s.playing);
     installRaf.current = requestAnimationFrame(tick);
-  }, []);
+  }, [s]);
 
   const toggleFirstPerson = () => {
     setFirstPerson(prev => {
       const next = !prev;
-      if (next) { setYaw(0); setElevation(45); setNotice("Walk mode on — W/A/S/D to move, drag to look. Toggle off to orbit."); }
+      if (next) { setYaw(0); setElevation(45); setNotice(s.walking); }
       else { setYaw(23); setElevation(39); setZoom(10); setNotice(""); }
       return next;
     });
@@ -138,64 +147,64 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
 
   return <section id="floor-studio" className="floor-studio-section" data-pour="1 1.6 .5">
     <div className="container">
-      <div className="section-heading studio-heading"><div><span className="eyebrow">NOT SURE WHAT TO CHOOSE?</span><h2>See the possibilities.<br /><em>Find your floor.</em></h2></div><p>Try a finish. Change the light. Look around.<br />A little inspiration before the real transformation.</p></div>
+      <div className="section-heading studio-heading"><div><span className="eyebrow">{s.eyebrow}</span><h2>{s.title[0]}<br /><em>{s.title[1]}</em></h2></div><p>{s.intro[0]} <br />{s.intro[1]}</p></div>
       <div className="floor-studio-shell">
         <div className="studio-preview-column">
           <div className="studio-preview-top">
-            <div className="studio-mode-tabs" role="tablist" aria-label="Preview mode">
-              <button role="tab" aria-selected={mode === "room"} className={mode === "room" ? "selected" : ""} onClick={() => setMode("room")}><Cuboid size={13} />3D Studio</button>
-              <button role="tab" aria-selected={mode === "photo"} className={mode === "photo" ? "selected" : ""} onClick={() => setMode("photo")}><Camera size={13} />Try in my photo</button>
+            <div className="studio-mode-tabs" role="tablist" aria-label={s.modes}>
+              <button role="tab" aria-selected={mode === "room"} className={mode === "room" ? "selected" : ""} onClick={() => setMode("room")}><Cuboid size={13} />{s.room}</button>
+              <button role="tab" aria-selected={mode === "photo"} className={mode === "photo" ? "selected" : ""} onClick={() => setMode("photo")}><Camera size={13} />{s.photo}</button>
             </div>
             {mode === "room" && <div className="studio-preview-top-actions">
-              <button onClick={toggleFirstPerson} className={firstPerson ? "studio-pill selected" : "studio-pill"} aria-pressed={firstPerson}><Footprints size={13} />{firstPerson ? "Overview" : "Walk the room"}</button>
-              <button onClick={resetView} className="studio-reset-view"><RotateCcw size={13} />Reset view</button>
+              <button onClick={toggleFirstPerson} className={firstPerson ? "studio-pill selected" : "studio-pill"} aria-pressed={firstPerson}><Footprints size={13} />{firstPerson ? s.overview : s.walk}</button>
+              <button onClick={resetView} className="studio-reset-view"><RotateCcw size={13} />{s.reset}</button>
             </div>}
           </div>
           {mode === "room"
             ? <FloorRoom appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen], room, yaw, elevation, zoom, daylight, firstPerson, installProgress }} backdrop={palette.deep} exportRef={exportRef} onOrbit={(y,e)=>{setYaw(y);setElevation(e);}} />
-            : <PhotoComposer appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} finishLabel={`${blend.name} · ${finish.name} / ${sheenNames[sheen]}`} />}
+            : <PhotoComposer appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} finishLabel={`${blendName} · ${finishName} / ${sheenName}`} />}
           {mode === "room" && <div className="studio-preview-summary" aria-live="polite">
-            <span><strong>{blend.name}</strong><small>{finish.name} / {sheenNames[sheen]} · {lighting.stopLabel}</small></span>
+            <span><strong>{blendName}</strong><small>{finishName} / {sheenName} · {lightName}</small></span>
             <div className="studio-preview-actions">
-              <button onClick={playInstall} aria-pressed={installProgress !== null} className={installProgress !== null ? "selected" : ""}>{installProgress !== null ? <Pause size={14} /> : <Play size={14} />}{installProgress !== null ? "Stop" : "Play install"}</button>
-              <button onClick={share} aria-label="Share this look"><Share2 size={15} />Share</button>
-              <ArButton finish={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} label={`${blend.name} · ${finish.name}`} onNotice={setNotice} />
-              <button onClick={()=>{if(exportRef.current){exportRef.current();setNotice("Your concept preview has been downloaded.");}else setNotice("Image saving needs 3D support in your browser. You can still use this design in your project brief.");}}><Download size={16} />Save preview</button>
+              <button onClick={playInstall} aria-pressed={installProgress !== null} className={installProgress !== null ? "selected" : ""}>{installProgress !== null ? <Pause size={14} /> : <Play size={14} />}{installProgress !== null ? s.stop : s.play}</button>
+              <button onClick={share} aria-label={s.shareLabel}><Share2 size={15} />{s.share}</button>
+              <ArButton finish={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} label={`${blendName} · ${finishName}`} onNotice={setNotice} />
+              <button onClick={()=>{if(exportRef.current){exportRef.current();setNotice(s.downloaded);}else setNotice(s.noExport);}}><Download size={16} />{s.save}</button>
             </div>
           </div>}
-          {mode === "room" && <details className="studio-camera"><summary><SlidersHorizontal size={14} />Camera controls <span>Adjust your perspective</span></summary><div><label>Rotate <output>{Math.round(yaw)}°</output><input type="range" min={-35} max={35} value={yaw} onChange={e=>setYaw(Number(e.target.value))} /></label><label>Height <output>{Math.round(elevation)}°</output><input type="range" min={20} max={60} value={elevation} onChange={e=>setElevation(Number(e.target.value))} /></label><label>Zoom <output>{Math.round((12-zoom)*20+20)}%</output><input type="range" min={8} max={12} step={.1} value={12-(zoom-8)} onChange={e=>setZoom(20-Number(e.target.value))} /></label></div></details>}
+          {mode === "room" && <details className="studio-camera"><summary><SlidersHorizontal size={14} />{s.camera} <span>{s.cameraHint}</span></summary><div><label>{s.rotate} <output>{Math.round(yaw)}°</output><input type="range" min={-35} max={35} value={yaw} onChange={e=>setYaw(Number(e.target.value))} /></label><label>{s.height} <output>{Math.round(elevation)}°</output><input type="range" min={20} max={60} value={elevation} onChange={e=>setElevation(Number(e.target.value))} /></label><label>{s.zoom} <output>{Math.round((12-zoom)*20+20)}%</output><input type="range" min={8} max={12} step={.1} value={12-(zoom-8)} onChange={e=>setZoom(20-Number(e.target.value))} /></label></div></details>}
         </div>
         <div className="studio-controls">
-          <fieldset><legend><span>01</span> Choose a finish</legend><div className="studio-system-options">{floorSystems.map((s,i)=><button key={s.id} className={i===system?"selected":""} aria-pressed={i===system} onClick={()=>{choose(i,0);setNotice("");}}>{s.name}{i===system?<Check size={14}/>:<ArrowUpRight size={14}/>}</button>)}</div><p className="studio-description">{finish.description}</p></fieldset>
-          <fieldset><legend><span>02</span> Explore a color blend</legend><div className="studio-swatches">{finish.colors.map((c,i)=><button key={c.name} aria-pressed={color===i} className={color===i?"selected":""} onClick={()=>{choose(system,i);setNotice("");}}><span className={`studio-swatch swatch-${finish.id}`} style={{"--swatch-base":c.base,"--swatch-accent":c.accent} as CSSProperties}>{color===i&&<Check size={14}/>}</span><span>{c.name}</span></button>)}</div>
+          <fieldset><legend><span>01</span> {s.chooseFinish}</legend><div className="studio-system-options">{floorSystems.map((s,i)=><button key={s.id} className={i===system?"selected":""} aria-pressed={i===system} onClick={()=>{choose(i,0);setNotice("");}}>{c.systems[i].name}{i===system?<Check size={14}/>:<ArrowUpRight size={14}/>}</button>)}</div><p className="studio-description">{c.systems[system].description}</p></fieldset>
+          <fieldset><legend><span>02</span> {s.chooseBlend}</legend><div className="studio-swatches">{finish.colors.map((col,i)=><button key={col.name} aria-pressed={color===i} className={color===i?"selected":""} onClick={()=>{choose(system,i);setNotice("");}}><span className={`studio-swatch swatch-${finish.id}`} style={{"--swatch-base":col.base,"--swatch-accent":col.accent} as CSSProperties}>{color===i&&<Check size={14}/>}</span><span>{c.systems[system].colors[i]}</span></button>)}</div>
             <p className="studio-wearing" aria-live="polite">{worn
-              ? <>The whole site is now wearing <strong>{worn.name}</strong>. <button onClick={() => wear(null)}>Back to 110% colors</button></>
-              : <>Pick a blend and the whole site will wear it.</>}</p>
+              ? <>{s.wearing} <strong>{worn.name}</strong>. <button onClick={() => wear(null)}>{s.wearReset}</button></>
+              : <>{s.wearHint}</>}</p>
           </fieldset>
           <fieldset>
-            <legend><span>03</span> Set the scene</legend>
-            <label className="studio-room-label">Space<select value={room} onChange={e=>setRoom(Number(e.target.value))}>{roomNames.map((name,i)=><option value={i} key={name}>{name}</option>)}</select></label>
-            <span className="studio-control-label">Sheen</span>
-            <div className="studio-segments">{sheenNames.map((name,i)=><button aria-pressed={sheen===i} className={sheen===i?"selected":""} onClick={()=>setSheen(i)} key={name}>{name}</button>)}</div>
-            <span className="studio-control-label studio-daylight-label"><Sunrise size={12} />Lighting<output>{lighting.stopLabel}</output></span>
-            <input type="range" min={0} max={1} step={0.01} value={daylight} onChange={e=>setDaylight(Number(e.target.value))} className="studio-daylight-slider" aria-label="Time of day" />
+            <legend><span>03</span> {s.scene}</legend>
+            <label className="studio-room-label">{s.space}<select value={room} onChange={e=>setRoom(Number(e.target.value))}>{c.rooms.map((name,i)=><option value={i} key={name}>{name}</option>)}</select></label>
+            <span className="studio-control-label">{s.sheen}</span>
+            <div className="studio-segments">{c.sheens.map((name,i)=><button aria-pressed={sheen===i} className={sheen===i?"selected":""} onClick={()=>setSheen(i)} key={name}>{name}</button>)}</div>
+            <span className="studio-control-label studio-daylight-label"><Sunrise size={12} />{s.lighting}<output>{lightName}</output></span>
+            <input type="range" min={0} max={1} step={0.01} value={daylight} onChange={e=>setDaylight(Number(e.target.value))} className="studio-daylight-slider" aria-label={s.timeOfDay} />
             <div className="studio-daylight-stops">
-              <span>Overcast</span><span>Noon</span><span>Sunset</span><span>Night</span>
+              {c.lighting.map(label => <span key={label}>{label}</span>)}
             </div>
           </fieldset>
           {estimatorVisible && <fieldset className="studio-estimate">
-            <legend><span>04</span> Ballpark the price</legend>
-            <span className="studio-control-label studio-daylight-label">Floor area<output>{area.toLocaleString("en-US")} sq ft</output></span>
-            <input type="range" min={100} max={3000} step={25} value={area} onChange={e=>setCustomArea(Number(e.target.value))} className="studio-daylight-slider" aria-label="Floor area in square feet" />
-            <p className="studio-estimate-figure" aria-live="polite"><strong>${priceLow.toLocaleString("en-US")} – ${priceHigh.toLocaleString("en-US")}</strong><small>{finish.name}, installed</small></p>
-            <p className="studio-estimate-note">{!pricing.confirmed && <b>Sample prices · only shown in development</b>}A ballpark, not a quote. Slab condition, repairs and prep set the final price after a free site visit.</p>
+            <legend><span>04</span> {s.estimate}</legend>
+            <span className="studio-control-label studio-daylight-label">{s.area}<output>{area.toLocaleString("en-US")} {c.sqft}</output></span>
+            <input type="range" min={100} max={3000} step={25} value={area} onChange={e=>setCustomArea(Number(e.target.value))} className="studio-daylight-slider" aria-label={s.areaLabel} />
+            <p className="studio-estimate-figure" aria-live="polite"><strong>${priceLow.toLocaleString("en-US")} – ${priceHigh.toLocaleString("en-US")}</strong><small>{s.installed(finishName)}</small></p>
+            <p className="studio-estimate-note">{!pricing.confirmed && <b>{s.samplePrices}</b>}{s.estimateNote}</p>
           </fieldset>}
-          <button className="studio-use-design" onClick={useDesign}>I like this look <ArrowUpRight size={18}/></button>
-          <button className="studio-request-sample" onClick={requestSample}><Mail size={14} />Request a free 4×4 sample</button>
+          <button className="studio-use-design" onClick={useDesign}>{s.like} <ArrowUpRight size={18}/></button>
+          <button className="studio-request-sample" onClick={requestSample}><Mail size={14} />{s.sample}</button>
           <p className="studio-notice" role="status">{notice}</p>
         </div>
       </div>
-      <p className="studio-disclaimer">A design concept, not an exact product sample. Patterns, color, sheen, and availability are confirmed with your project consultation.</p>
+      <p className="studio-disclaimer">{s.disclaimer}</p>
     </div>
   </section>;
 }

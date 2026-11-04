@@ -57,9 +57,10 @@ function Sofa() {
     {[-1.08, 1.08].flatMap(x => [-.32, .32].map(z => <Rod key={`${x}-${z}`} from={[x, .02, z]} to={[x * .96, .24, z * .9]} radius={.035} surface="walnut" />))}
     <Solid at={[0, .27, 0]} size={[2.55, .24, .91]} surface="walnut" radius={.055} />
     <Solid at={[0, .64, -.37]} size={[2.48, .66, .24]} surface="linen" radius={.10} />
-    {[-.78, 0, .78].map(x => <group key={x}>
-      <Solid at={[x, .47, .09]} size={[.75, .22, .72]} surface="cream" radius={.085} />
-      <Solid at={[x, .78, -.23]} size={[.74, .47, .22]} rotation={[-.12, 0, 0]} surface="cream" radius={.09} />
+    {/* Each cushion sits a little differently, as they do once a sofa has been used. */}
+    {([[-.78, .012, .02], [0, -.006, -.015], [.78, .004, .03]] as const).map(([x, sag, lean]) => <group key={x}>
+      <Solid at={[x, .47 + sag, .09]} size={[.75, .22, .72]} rotation={[0, lean * .4, sag]} surface="cream" radius={.1} />
+      <Solid at={[x, .78, -.23]} size={[.74, .47, .22]} rotation={[-.12 - lean, lean, 0]} surface="cream" radius={.105} />
       {/* Narrow welt beneath each cushion makes the construction legible. */}
       <Solid at={[x, .405, .09]} size={[.755, .018, .72]} surface="linen" radius={.008} />
     </group>)}
@@ -73,6 +74,7 @@ function Living() {
   return <group>
     <Sofa />
     <Prop id="mid_century_lounge_chair" at={[-1.95, 0, .2]} rotation={2.2} />
+    <Prop id="ottoman_01" at={[-1.22, 0, -.28]} rotation={2.2} scale={.72} />
     <Prop id="modern_coffee_table_01" at={[-.5, 0, -.8]} rotation={Math.PI / 2} fallback={<group position={[-.5, 0, -.65]}>
       <Solid at={[0, .43, 0]} size={[1.25, .065, .65]} surface="walnut" radius={.03} />
       {[-.47, .47].flatMap(x => [-.22, .22].map(z => <Rod key={`${x}-${z}`} from={[x * 1.15, .02, z * 1.1]} to={[x, .40, z]} radius={.025} surface="walnut" />))}
@@ -198,7 +200,10 @@ function Patio() {
 export const RoomFurniture = memo(function RoomFurniture({ room }: { room: number }) {
   const resources = useMemo(() => {
     const wood = detailMap("wood"), fabric = detailMap("fabric");
-    const material = (color: string, roughness: number, metalness = 0, map?: THREE.Texture) => new THREE.MeshStandardMaterial({ color, roughness, metalness, ...(map && { map, bumpMap: map, bumpScale: map === fabric ? .002 : .001 }) });
+    const material = (color: string, roughness: number, metalness = 0, map?: THREE.Texture) => map === fabric
+      // Upholstery gets a soft sheen at grazing angles, the cue that reads as cloth rather than painted plastic.
+      ? new THREE.MeshPhysicalMaterial({ color, roughness, map, bumpMap: map, bumpScale: .003, sheen: 1, sheenRoughness: .75, sheenColor: new THREE.Color(color).lerp(new THREE.Color("#ffffff"), .35) })
+      : new THREE.MeshStandardMaterial({ color, roughness, metalness, ...(map && { map, bumpMap: map, bumpScale: .001 }) });
     const materials: Record<Surface, THREE.MeshStandardMaterial> = {
       oak: material("#bc9565", .55, 0, wood), walnut: material("#705039", .43, 0, wood),
       linen: material("#b8a38a", .95, 0, fabric), cream: material("#e4d8c2", .95, 0, fabric),

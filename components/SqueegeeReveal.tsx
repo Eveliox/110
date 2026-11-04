@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Sparkles } from "lucide-react";
-import { sound } from "@/lib/sound";
+import { useCopy } from "./LangProvider";
 
 // One original stacked comparison photo: the raw slab above, the finished metallic floor below,
 // shot from nearly the same spot so the two halves register.
@@ -14,6 +14,7 @@ type Point = { x: number; y: number };
 
 /** Drag a squeegee across the raw concrete to pull the finished coat over it. */
 export function SqueegeeReveal() {
+  const c = useCopy().squeegee;
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const api = useRef<{ reveal: () => void; reset: () => void }>({ reveal: () => {}, reset: () => {} });
@@ -33,7 +34,7 @@ export function SqueegeeReveal() {
     layers.probe.width = 64; layers.probe.height = 32;
     let width = 0, height = 0, ratio = 1, frame = 0, inView = false, dirty = true;
     let blade: { at: Point; angle: number; visible: boolean } = { at: { x: 0, y: 0 }, angle: 0, visible: false };
-    let readyForDemo = false, lastMoveAt = 0, dragging = false, last: Point | null = null, lastAngle = 0, wetUntil = 0, demoPlayed = false, sweep: { t0: number } | null = null, strokes = 0;
+    let readyForDemo = false, dragging = false, last: Point | null = null, lastAngle = 0, wetUntil = 0, demoPlayed = false, sweep: { t0: number } | null = null, strokes = 0;
 
     // Crop a source half to the canvas aspect, like object-fit: cover.
     const paintHalf = (target: HTMLCanvasElement, rect: typeof BEFORE) => {
@@ -83,9 +84,6 @@ export function SqueegeeReveal() {
         while (target - lastAngle > Math.PI / 2) target -= Math.PI;
         while (target - lastAngle < -Math.PI / 2) target += Math.PI;
         const angle = lastAngle + (target - lastAngle) * .35;
-        const now = performance.now();
-        sound.squeegee(Math.hypot(dx, dy) / ratio / Math.max(4, now - lastMoveAt));
-        lastMoveAt = now;
         pull(last, to, lastAngle, angle);
         lastAngle = angle;
         if (++strokes % 8 === 0) measure();
@@ -197,18 +195,18 @@ export function SqueegeeReveal() {
 
   return <figure className="squeegee">
     <div className="squeegee-stage" ref={wrapRef}>
-      <canvas ref={canvasRef} role="img" aria-label="Interactive before and after of one of our projects: a bare, dusty concrete slab that becomes a glossy blue and white metallic epoxy floor as you drag across it." />
-      <span className="squeegee-pill before">Raw slab</span>
-      <span className={`squeegee-pill after ${coverage > 0 ? "shown" : ""}`}>Metallic epoxy</span>
-      {!touched && !cured && <span className="squeegee-cue" aria-hidden="true">Drag to pull the coat</span>}
+      <canvas ref={canvasRef} role="img" aria-label={c.canvas} />
+      <span className="squeegee-pill before">{c.before}</span>
+      <span className={`squeegee-pill after ${coverage > 0 ? "shown" : ""}`}>{c.after}</span>
+      {!touched && !cured && <span className="squeegee-cue" aria-hidden="true">{c.cue}</span>}
     </div>
     <figcaption className="squeegee-bar">
-      <span className="squeegee-meter" aria-live="polite"><span style={{ width: `${coverage}%` }} /><b>{cured ? "100% coated · Cured" : `${coverage}% coated`}</b></span>
+      <span className="squeegee-meter" aria-live="polite"><span style={{ width: `${coverage}%` }} /><b>{cured ? c.cured : c.coated(coverage)}</b></span>
       <span className="squeegee-actions">
-        {!cured && <button onClick={() => api.current.reveal()}><Sparkles size={13} />Finish the coat</button>}
-        {coverage > 0 && <button onClick={() => api.current.reset()}><RotateCcw size={13} />Back to bare concrete</button>}
+        {!cured && <button onClick={() => api.current.reveal()}><Sparkles size={13} />{c.finish}</button>}
+        {coverage > 0 && <button onClick={() => api.current.reset()}><RotateCcw size={13} />{c.reset}</button>}
       </span>
-      <small>Original project photographs. Same room, before and after.</small>
+      <small>{c.caption}</small>
     </figcaption>
   </figure>;
 }

@@ -69,11 +69,14 @@ export function RoomArchitecture({ room, daylight, firstPerson }: { room: number
       <pointLight position={[1.4, 1.65, -2.2]} color="#ffce8c" intensity={daylight > .65 ? 3 : .5} distance={5} decay={2} />
       <Artwork x={-.65} width={1.8} />
       <Prop id="potted_plant_02" at={[-2.3, 0, -1.45]} scale={1.35} fallback={<Plant at={[-2.35, 0, -1.3]} scale={1.3} />} />
-      <group position={[1.96, 0, -.55]} rotation={[0, -.32, 0]}>
-        <RoundedBox args={[.85, .5, .42]} radius={.035} position={[0, .31, 0]} castShadow><meshStandardMaterial color="#70533c" roughness={.65} /></RoundedBox>
-        <Box at={[0, .98, 0]} size={[1.12, .67, .065]} color="#161a1c" />
-        <Box at={[0, .98, .039]} size={[1.04, .59, .012]} color="#263b44" />
-        <Box at={[0, .6, 0]} size={[.25, .06, .18]} color="#26292a" />
+      <group position={[1.9, 0, -.55]} rotation={[0, -.32, 0]}>
+        {/* A slatted mid-century sideboard to sit with the lounge chair, and a slim panel TV on it. */}
+        <Prop id="modern_wooden_cabinet" at={[0, 0, 0]} scale={.62} fallback={<RoundedBox args={[1.5, .42, .32]} radius={.03} position={[0, .21, 0]} castShadow><meshStandardMaterial color="#70533c" roughness={.65} /></RoundedBox>} />
+        <Box at={[-.12, .45, -.02]} size={[.28, .018, .14]} color="#232628" />
+        <Box at={[-.12, .5, -.02]} size={[.035, .1, .025]} color="#232628" />
+        <mesh position={[-.12, .86, -.02]} castShadow><boxGeometry args={[1.12, .64, .022]} /><meshStandardMaterial color="#0d0f10" roughness={.25} metalness={.3} /></mesh>
+        <mesh position={[-.12, .86, -.008]}><planeGeometry args={[1.09, .61]} /><meshStandardMaterial color="#05070a" roughness={.08} metalness={.1} envMapIntensity={1.4} /></mesh>
+        <Prop id="ceramic_vase_03" at={[.55, .42, .02]} scale={.8} />
       </group>
     </>}
     {industrial && <>

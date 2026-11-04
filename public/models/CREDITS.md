@@ -19,3 +19,5 @@ downloaded at 1K texture resolution and compressed (meshopt geometry, WebP textu
 | metal_stool_01.glb | [Metal Stool 01](https://polyhaven.com/a/metal_stool_01) | Ulan Cabanilla |
 | outdoor_table_chair_set_01.glb | [Outdoor Table Chair Set 01](https://polyhaven.com/a/outdoor_table_chair_set_01) | James Ray Cock |
 | planter_box_01.glb | [Planter Box 01](https://polyhaven.com/a/planter_box_01) | James Ray Cock |
+| modern_wooden_cabinet.glb | [Modern Wooden Cabinet](https://polyhaven.com/a/modern_wooden_cabinet) | Patrik Pangerl |
+| ottoman_01.glb | [Ottoman 01](https://polyhaven.com/a/Ottoman_01) | Caspian Fortune |

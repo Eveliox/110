@@ -1420,3 +1420,14 @@ h2 {
 }
 
 }
+.footer-credit {
+  color:inherit;
+  text-decoration:underline;
+  text-decoration-color:#ffffff40;
+  text-underline-offset:3px;
+  transition:color .2s,text-decoration-color .2s
+}
+.footer-credit:hover {
+  color:var(--tone-glow,#fff);
+  text-decoration-color:currentColor
+}

@@ -20,5 +20,5 @@ export function estimate(system: FloorSystem, area: number): [number, number] {
   return [Math.max(pricing.minimumJob, roundTo50(low * area)), Math.max(pricing.minimumJob, roundTo50(high * area))];
 }
 
-// Matches the "Approximate size" options in the quote form.
-export const sizeBucket = (area: number) => area < 500 ? "Under 500 sq ft" : area <= 1000 ? "500–1,000 sq ft" : area <= 2000 ? "1,000–2,000 sq ft" : "Over 2,000 sq ft";
+// Which of the quote form's four "Approximate size" options (under 500, 500–1,000, 1,000–2,000, over 2,000 sq ft) an area falls in.
+export const sizeBucket = (area: number) => area < 500 ? 0 : area <= 1000 ? 1 : area <= 2000 ? 2 : 3;

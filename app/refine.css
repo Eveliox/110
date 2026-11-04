@@ -1,0 +1,167 @@
+/* Usability pass: a header that returns on scroll-up, matched form controls, and a legible type floor. */
+
+/* The bar that slides back in when scrolling up. */
+.scroll-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: #0a070dd9; backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid #ffffff14; transform: translateY(-101%); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+.scroll-bar[data-shown="true"] { transform: none; }
+.scroll-bar-inner { height: 62px; display: flex; align-items: center; gap: 30px; }
+/* The logo's lettering is dark, so it sits on a pool of the site's glow, as it does in the hero. */
+.scroll-bar-brand { display: block; padding: 12px 28px; margin-left: -28px; background: radial-gradient(ellipse closest-side,color-mix(in srgb,var(--tone-glow) 95%,transparent) 30%,color-mix(in srgb,var(--tone-glow) 45%,transparent) 70%,transparent); }
+.scroll-bar nav { display: flex; gap: 28px; margin-right: auto; font: 11px ui-monospace,monospace; letter-spacing: .1em; text-transform: uppercase; color: #ddd2e2; }
+.scroll-bar nav a:hover { color: #fff; }
+.scroll-bar-actions { display: flex; align-items: center; gap: 12px; }
+.scroll-bar-call { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding-inline: 4px; font-size: 13px; color: #f1e9f4; }
+.scroll-bar-call:hover { color: var(--tone-glow); }
+.scroll-bar-dm { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid #ffffff40; border-radius: 50%; color: #f1e9f4; transition: border-color .2s,color .2s; }
+.scroll-bar-dm:hover { border-color: var(--tone-glow); color: var(--tone-glow); }
+.scroll-bar-quote { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 30px; background: var(--tone-glow); color: #1b1220; font-size: 13px; font-weight: 500; transition: background .2s; }
+.scroll-bar-quote:hover { background: #fff; }
+@media (max-width: 900px) { .scroll-bar nav { display: none; } .scroll-bar-actions { margin-left: auto; } }
+@media (max-width: 550px) {
+  .scroll-bar-inner { height: 56px; gap: 10px; }
+  .scroll-bar-call span { display: none; }
+  .scroll-bar-call { width: 36px; justify-content: center; border: 1px solid #ffffff40; border-radius: 50%; }
+  .scroll-bar-actions { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .scroll-bar { transition: none; } }
+
+/* Selects drawn like the text fields beside them, rather than as native pop-up buttons. */
+.site-shell .form-grid select,.site-shell .studio-room-label select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23dcc8e2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3.5 5.5 3.5 3.5 3.5-3.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 14px; cursor: pointer; }
+.site-shell .form-grid select { min-height: 46px; padding: 13px 40px 13px 12px; line-height: 1.3; }
+.site-shell .studio-room-label select { min-height: 44px; padding: 11px 40px 11px 12px; font-size: 13px; line-height: 1.3; }
+.site-shell .form-grid select:invalid,.site-shell .form-grid select:has(option[value=""]:checked) { color: #a99bb0; }
+.site-shell .form-grid select option { color: #f1e9f4; }
+
+/* Questions answered beside the form, instead of in a section of their own. */
+.site-shell .quote-grid { grid-template-columns: 1fr 1.1fr; align-items: start; gap: 64px 80px; }
+.site-shell .quote-copy { grid-column: 1; grid-row: 1; }
+.site-shell .quote-form { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 84px; }
+.quote-faq { grid-column: 1; grid-row: 2; }
+.quote-faq h3 { margin: 14px 0 26px; font-size: clamp(28px,2.6vw,36px); font-weight: 400; letter-spacing: -.045em; line-height: 1.1; color: #f1e9f4; }
+.quote-faq .eyebrow { color: var(--tone-soft); }
+.site-shell .quote-faq .faq-list { text-shadow: none; }
+.site-shell .quote-faq .faq-list details { background: #08060d8c; backdrop-filter: blur(10px); }
+@media (max-width: 800px) {
+  .site-shell .quote-grid { grid-template-columns: 1fr; gap: 40px; }
+  .site-shell .quote-copy,.site-shell .quote-form,.quote-faq { grid-column: auto; grid-row: auto; }
+  .site-shell .quote-form { position: static; }
+}
+
+/* The process steps: a line that draws itself across each step as the section scrolls in. */
+.site-shell .process-grid article { border-top-color: #ffffff1c; }
+.site-shell .process-grid article::before { content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 1px; background: linear-gradient(90deg,var(--tone-glow),var(--tone-soft)); transform-origin: left; }
+.site-shell .step-number { padding-bottom: 22px; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .site-shell .process-grid article::before { animation: step-draw linear both; animation-timeline: view(); animation-range: cover 8% cover 30%; }
+    .site-shell .process-grid article:nth-child(2)::before { animation-range: cover 12% cover 34%; }
+    .site-shell .process-grid article:nth-child(3)::before { animation-range: cover 16% cover 38%; }
+    .site-shell .process-grid article:nth-child(4)::before { animation-range: cover 20% cover 42%; }
+    @keyframes step-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  }
+}
+
+/* No single words stranded on a line. */
+.site-shell p,.site-shell li,.site-shell figcaption,.site-shell summary { text-wrap: pretty; }
+.site-shell h1,.site-shell h2,.site-shell h3 { text-wrap: balance; }
+
+/* The hero taglines keep their column now that the motion toggle is gone. */
+.site-shell .flow-hero-footer > p:first-of-type { grid-column-start: 2; }
+
+/* Type floor: nothing a visitor needs to read drops below 11px, and running copy sits at 12–13px. */
+.site-shell .desktop-nav,.site-shell .nav-actions .button { font-size: 11px; }
+.site-shell .flow-hero-meta { font-size: 11px; color: #f1eaf4e0; text-shadow: 0 1px 12px #0009; }
+.site-shell .eyebrow,.site-shell .flow-overline,.site-shell .flow-headline > .flow-overline,.site-shell .flow-project-description > .flow-overline { font-size: 11px; }
+.site-shell .flow-stir-hint { font-size: 11px; color: #ffffffd9; text-shadow: 0 1px 12px #000a; }
+.site-shell .flow-headline > .flow-pill,.site-shell .flow-all-work { font-size: 13px; }
+.site-shell .flow-hero-footer p { font-size: 13px; }
+.site-shell .flow-project-description p { font-size: 11px; }
+.site-shell .flow-project-note,.site-shell .flow-carousel-controls span { font-size: 12px; }
+.site-shell .chip-caption small,.site-shell .finish-advice p,.site-shell .finish-display-copy .text-link,.site-shell .about-copy .text-link { font-size: 13px; }
+.site-shell .chip-caption .finish-index,.site-shell .sample-hint { font-size: 11px; }
+.site-shell .collection-tag,.site-shell .image-label,.site-shell .room-badge { font-size: 11px; }
+.site-shell .studio-mode-tabs button,.site-shell .studio-preview-top-actions button,.site-shell .studio-preview-actions button,.site-shell .studio-camera summary,.site-shell .studio-camera label,.site-shell .studio-request-sample { font-size: 12px; }
+.site-shell .room-caption,.site-shell .studio-camera summary span,.site-shell .studio-camera output,.site-shell .studio-preview-summary small { font-size: 12px; }
+.site-shell .studio-controls legend span,.site-shell .studio-daylight-stops span,.site-shell .studio-swatches span { font-size: 11px; }
+.site-shell .studio-description,.site-shell .studio-wearing,.site-shell .studio-estimate-note,.site-shell .studio-estimate-figure small,.site-shell .studio-disclaimer { font-size: 13px; }
+.site-shell .studio-estimate-note b { font-size: 11px; }
+.site-shell .studio-control-label,.site-shell .studio-room-label,.site-shell .studio-control-label output,.site-shell .studio-segments button { font-size: 12px; }
+.site-shell .squeegee-pill,.site-shell .squeegee-cue,.site-shell .squeegee-meter b { font-size: 11px; }
+.site-shell .squeegee-bar small { font-size: 12px; }
+.site-shell .quote-note,.site-shell .form-note { font-size: 12px; }
+.site-shell .form-heading > span { font-size: 11px; }
+.site-shell .form-grid label,.site-shell .optional { font-size: 12px; }
+.site-shell .form-grid input,.site-shell .form-grid textarea,.site-shell .form-grid select { font-size: 14px; }
+.site-shell .faq-list summary { font-size: 14px; }
+.site-shell .faq-list details p,.site-shell .process-grid p { font-size: 13px; }
+.site-shell .footer-top > div a { font-size: 13px; }
+.site-shell .footer-bottom { font-size: 11px; color: #d6cbdb; }
+.site-shell .footer-bottom,.site-shell .footer-top { text-shadow: 0 1px 12px #000b; }
+@media (max-width: 800px) {
+  .site-shell .form-grid input,.site-shell .form-grid textarea,.site-shell .form-grid select,.site-shell .studio-room-label select { font-size: 16px; }
+}
+/* Wide enough that each of the squeegee intro's two sentences holds one line. */
+.site-shell .squeegee-section .section-heading > p { max-width: 400px; }
+@media (max-width: 800px) { .site-shell .squeegee-section .section-heading > p br { display: none; } }
+
+/* The controls column runs longer than the room; keep the room in view while adjusting them. */
+@media (min-width: 801px) {
+  .site-shell .studio-preview-column { position: sticky; top: 72px; align-self: start; }
+}
+.site-shell .studio-disclaimer { color: #e6dbea; text-shadow: 0 1px 12px #000c; }
+
+@media (max-width: 550px) {
+  /* One tagline under the hero on phones, at a size that can be read. */
+  .site-shell .flow-hero-footer { grid-template-columns: 1fr 28px; }
+  .site-shell .flow-hero-footer > p:first-of-type { grid-column-start: 1; }
+  .site-shell .flow-hero-footer p { font-size: 12px; line-height: 1.6; }
+  .site-shell .flow-hero-footer p:nth-of-type(2) { display: none; }
+  /* The hero's own call to action sits just below; the scroll bar carries "Get a quote" from there on. */
+  .site-shell .nav-actions .button { display: none; }
+  .site-shell .form-grid { grid-template-columns: 1fr; }
+}
+
+/* Call or DM, beside the form. */
+.direct-contact { margin-top: 40px; padding-top: 26px; border-top: 1px solid #ffffff1f; max-width: 460px; }
+.direct-contact p { font-size: 14px; line-height: 1.6; color: #f1e9f4; }
+.direct-contact > div { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.direct-contact a { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 18px; border-radius: 30px; font-size: 14px; transition: background .2s,border-color .2s,color .2s; }
+.direct-call { background: var(--tone-glow); color: #1b1220; font-weight: 500; }
+.direct-call:hover { background: #fff; }
+.direct-dm { border: 1px solid #ffffff4d; color: #f1e9f4; backdrop-filter: blur(8px); }
+.direct-dm:hover { border-color: var(--tone-glow); color: var(--tone-glow); }
+.site-shell .footer-top > div a svg { flex: none; }
+@media (max-width: 800px) {
+  .site-shell .footer-top > div { flex-wrap: wrap; justify-content: flex-start; gap: 14px 24px; }
+  .site-shell .footer-top > div a { white-space: nowrap; }
+}
+
+/* Language switch: a quiet text link in the header, the scroll bar and the footer. */
+.lang-switch,.scroll-bar-lang { font: 11px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; color: #f1e9f4; padding: 6px 10px; border: 1px solid #ffffff40; border-radius: 30px; white-space: nowrap; transition: border-color .2s,color .2s; }
+.lang-switch:hover,.scroll-bar-lang:hover { border-color: var(--tone-glow); color: var(--tone-glow); }
+.site-shell .nav-actions { gap: 18px; }
+.direct-text { border: 1px solid #ffffff4d; color: #f1e9f4; backdrop-filter: blur(8px); }
+.direct-text:hover { border-color: var(--tone-glow); color: var(--tone-glow); }
+@media (max-width: 550px) {
+  .scroll-bar-brand { padding: 10px 18px; margin-left: -18px; }
+  .scroll-bar-brand .actual-logo { width: 74px !important; }
+  .scroll-bar-dm { width: 34px; height: 34px; }
+  .scroll-bar-call { width: 34px; height: 34px; }
+  .scroll-bar-quote { padding: 0 13px; font-size: 12px; }
+}
+/* A fixed bar wider than the phone would stretch the whole page sideways; it clips instead. */
+.scroll-bar { overflow: hidden; }
+.scroll-bar-quote .label-short { display: none; }
+@media (max-width: 400px) {
+  .scroll-bar-quote .label-full { display: none; }
+  .scroll-bar-quote .label-short { display: inline; }
+}
+@media (max-width: 550px) {
+  /* Spanish labels run longer; keep the two photo labels from meeting. */
+  .site-shell .squeegee-pill { letter-spacing: .06em; padding-inline: 9px; }
+}
+@media (max-width: 550px) {
+  /* The studio's action buttons wrap below the finish name instead of pushing past the screen edge. */
+  .site-shell .studio-preview-summary { flex-wrap: wrap; }
+  .site-shell .studio-preview-actions { flex-wrap: wrap; }
+  .site-shell .studio-preview-summary button { white-space: nowrap; }
+}

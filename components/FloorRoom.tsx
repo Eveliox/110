@@ -10,7 +10,8 @@ import { buildFinishCanvas, buildNormalCanvas, buildRoughnessCanvas, finishPhoto
 import { RoomFurniture } from "./RoomFurniture";
 import { RoomArchitecture } from "./RoomArchitecture";
 import { InstallSurface } from "./InstallSurface";
-import { installLabels, installPhase, installClock } from "@/lib/install-sequence";
+import { installPhase, installClock } from "@/lib/install-sequence";
+import { useCopy } from "./LangProvider";
 import { floorSystems, resolveLighting } from "@/lib/floor-studio";
 import { mixHex } from "@/lib/atmosphere";
 
@@ -258,7 +259,8 @@ function FirstPersonRig({ yaw, elevation }: { yaw: number; elevation: number }) 
   return null;
 }
 
-function Exporter({ exportRef }: { exportRef: RefObject<(() => void) | null> }) {
+// Text arrives as props: this renders inside the 3D canvas, outside the page's language context.
+function Exporter({ exportRef, text }: { exportRef: RefObject<(() => void) | null>; text: { title: string; note: string; file: string } }) {
   const { gl, scene, camera } = useThree();
   useEffect(() => {
     exportRef.current = () => {
@@ -272,20 +274,24 @@ function Exporter({ exportRef }: { exportRef: RefObject<(() => void) | null> }) 
       c.fillRect(0, 0, out.width, out.height);
       c.drawImage(src, 0, 0, out.width, out.height - 72);
       c.fillStyle = "#eee4f4"; c.font = "14px sans-serif";
-      c.fillText("110% COATINGS / FLOOR STUDIO", 22, out.height - 42);
+      c.fillText(text.title, 22, out.height - 42);
       c.font = "11px sans-serif";
-      c.fillText("Illustrative concept. Confirm final color, pattern and sheen with a physical sample.", 22, out.height - 20);
+      c.fillText(text.note, 22, out.height - 20);
       const link = document.createElement("a");
-      link.download = "110-coatings-floor-concept.png";
+      link.download = text.file;
       link.href = out.toDataURL("image/png");
       link.click();
     };
     return () => { exportRef.current = null; };
-  }, [gl, scene, camera, exportRef]);
+  }, [gl, scene, camera, exportRef, text]);
   return null;
 }
 
 export function FloorRoom({ appearance: inputAppearance, backdrop, onOrbit, exportRef }: { appearance: RoomAppearance; backdrop?: string; onOrbit: (yaw: number, elevation: number) => void; exportRef: RefObject<(() => void) | null> }) {
+  const copy = useCopy();
+  const t = copy.studio;
+  const exportText = useMemo(() => ({ title: t.exportTitle, note: t.exportNote, file: t.exportFile }), [t]);
+  const installSteps = t.install(inputAppearance.system);
   const [reducedMotion, setReducedMotion] = useState(false);
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -364,6 +370,9 @@ export function FloorRoom({ appearance: inputAppearance, backdrop, onOrbit, expo
           shadow-radius={5}
         />
         <directionalLight color={lighting.ambient} position={[-4, 4, -2]} intensity={0.3} />
+        {/* Daylight through the side window: a soft pool across the floor and back wall instead of even, flat fill.
+            Unshadowed, so it passes the wall; aimed at the room's centre, where its target already sits. */}
+        {appearance.room !== 4 && <spotLight color={lighting.directional} position={[-4.6, appearance.room === 1 || appearance.room === 3 ? 2.9 : 2.5, .35]} intensity={lighting.windowLight} angle={.78} penumbra={1} decay={2} />}
         <Floor appearance={appearance} />
         {progress !== null && <InstallSurface appearance={appearance} reducedMotion={reducedMotion} />}
         <RoomShell appearance={appearance} wallTint={lighting.wallTint} />
@@ -391,23 +400,23 @@ export function FloorRoom({ appearance: inputAppearance, backdrop, onOrbit, expo
           <Vignette offset={0.35} darkness={0.4} blendFunction={BlendFunction.NORMAL} />
           <SMAA />
         </EffectComposer>
-        <Exporter exportRef={exportRef} />
+        <Exporter exportRef={exportRef} text={exportText} />
       </Canvas>
-      {!ready && <div className="room-fallback"><p>Preparing your room preview…</p></div>}
-      <div className="room-badge">{ready ? (appearance.firstPerson ? "WALK MODE · W/A/S/D" : "LIVE 3D PREVIEW") : "LOADING PREVIEW"}</div>
+      {!ready && <div className="room-fallback"><p>{t.preparing}</p></div>}
+      <div className="room-badge">{ready ? (appearance.firstPerson ? t.walkBadge : t.live) : t.loading}</div>
       {appearance.installProgress !== null && (
         <div className="install-overlay">
           <div className="install-progress"><div className="install-progress-bar" style={{ width: `${Math.round(appearance.installProgress * 100)}%` }} /></div>
-          <div className="install-heading"><span>THE TRANSFORMATION</span><time>{installClock(appearance.installProgress)}</time></div>
-          <div className="install-caption" aria-live="polite">{installLabels(appearance.system)[installPhase(appearance.installProgress)]}</div>
-          <div className="install-steps">{installLabels(appearance.system).map((label, i) => <span key={label} className={i <= installPhase(appearance.installProgress!) ? "active" : ""}>{String(i + 1).padStart(2, "0")}<b>{label}</b></span>)}</div>
-          <small>Illustrative time-lapse · Application and cure times vary</small>
+          <div className="install-heading"><span>{t.installHeading}</span><time>{installClock(appearance.installProgress, copy.am, copy.pm)}</time></div>
+          <div className="install-caption" aria-live="polite">{installSteps[installPhase(appearance.installProgress)]}</div>
+          <div className="install-steps">{installSteps.map((label, i) => <span key={label} className={i <= installPhase(appearance.installProgress!) ? "active" : ""}>{String(i + 1).padStart(2, "0")}<b>{label}</b></span>)}</div>
+          <small>{t.installNote}</small>
         </div>
       )}
       <div className="room-caption">
         {appearance.firstPerson
-          ? "Drag to look · W/A/S/D or arrows to walk"
-          : "Drag to look around · or use the camera controls"}
+          ? t.walkHint
+          : t.orbitHint}
       </div>
     </div>
   );

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { hexToRgb, type Palette } from "@/lib/atmosphere";
-import { sound } from "@/lib/sound";
 
 const vertex = `
 attribute vec2 position;
@@ -40,6 +39,7 @@ uniform vec3 base;
 uniform vec3 accent;
 uniform vec3 glow;
 uniform vec4 camera; // tilt, zoom, travel, exposure
+uniform float calm; // 0 = full swirl, 1 = settled toward its average tone behind reading sections
 
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float noise(vec2 p) {
@@ -98,7 +98,7 @@ void main() {
     lit += glow * length(stirred) * .12;
 
     // Far floor resolves to its average tone instead of shimmering, then into haze.
-    float detail = exp(-dist * .09);
+    float detail = exp(-dist * .09) * (1. - calm * .72);
     vec3 average = mix(base, accent, .35) * .55;
     lit = mix(average, lit, detail);
     vec3 haze = mix(deep, glow * .35, .25);
@@ -120,15 +120,16 @@ void main() {
 }
 `;
 
-export type PourCamera = { tilt: number; zoom: number; exposure: number };
-const fallbackCamera: PourCamera = { tilt: .45, zoom: 1, exposure: .55 };
+export type PourCamera = { tilt: number; zoom: number; exposure: number; calm: number };
+const fallbackCamera: PourCamera = { tilt: .45, zoom: 1, exposure: .55, calm: 0 };
+const cameraKeys = ["tilt", "zoom", "exposure", "calm"] as const;
 
 // Each section can declare where the camera sits while it's centred on screen:
-// data-pour="tilt zoom exposure". The camera eases between neighbouring anchors.
+// data-pour="tilt zoom exposure [calm]". The camera eases between neighbouring anchors.
 function readAnchors(): { top: number; camera: PourCamera }[] {
   return Array.from(document.querySelectorAll<HTMLElement>("[data-pour]")).map(el => {
-    const [tilt, zoom, exposure] = (el.dataset.pour ?? "").split(" ").map(Number);
-    return { top: el.getBoundingClientRect().top + window.scrollY, camera: { tilt, zoom, exposure } };
+    const [tilt, zoom, exposure, calm = 0] = (el.dataset.pour ?? "").split(" ").map(Number);
+    return { top: el.getBoundingClientRect().top + window.scrollY, camera: { tilt, zoom, exposure, calm } };
   }).sort((a, b) => a.top - b.top);
 }
 
@@ -140,16 +141,16 @@ function cameraAt(anchors: { top: number; camera: PourCamera }[], focus: number)
     if (focus < b.top) {
       const raw = (focus - a.top) / Math.max(1, b.top - a.top);
       const t = raw * raw * (3 - 2 * raw);
-      return { tilt: a.camera.tilt + (b.camera.tilt - a.camera.tilt) * t, zoom: a.camera.zoom + (b.camera.zoom - a.camera.zoom) * t, exposure: a.camera.exposure + (b.camera.exposure - a.camera.exposure) * t };
+      return Object.fromEntries(cameraKeys.map(key => [key, a.camera[key] + (b.camera[key] - a.camera[key]) * t])) as PourCamera;
     }
   }
   return anchors[anchors.length - 1].camera;
 }
 
-export function PourField({ paused, palette }: { paused: boolean; palette: Palette }) {
+export function PourField({ palette }: { palette: Palette }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const controls = useRef({ paused, palette });
-  useEffect(() => { controls.current = { paused, palette }; }, [paused, palette]);
+  const controls = useRef({ palette });
+  useEffect(() => { controls.current = { palette }; }, [palette]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -226,11 +227,10 @@ export function PourField({ paused, palette }: { paused: boolean; palette: Palet
     if (studio) studioObserver.observe(studio);
 
     const onPointer = (event: PointerEvent) => {
-      if (motion.matches || controls.current.paused) return;
+      if (motion.matches) return;
       const x = event.clientX / window.innerWidth, y = 1 - event.clientY / window.innerHeight;
       const now = performance.now();
       if (now - state.lastPointerAt < 120) {
-        sound.stir(Math.hypot(x - state.pointer[0], y - state.pointer[1]) / Math.max(.008, (now - state.lastPointerAt) / 1000));
         state.velocity[0] += Math.max(-.6, Math.min(.6, (x - state.pointer[0]) * 9));
         state.velocity[1] += Math.max(-.6, Math.min(.6, (y - state.pointer[1]) * 9));
       }
@@ -242,7 +242,7 @@ export function PourField({ paused, palette }: { paused: boolean; palette: Palet
     const contextLost = (event: Event) => { event.preventDefault(); canvas.style.opacity = "0"; cancelAnimationFrame(state.frame); };
     canvas.addEventListener("webglcontextlost", contextLost);
 
-    const pourUniforms = { resolution: u(pour, "resolution"), time: u(pour, "time"), stir: u(pour, "stir"), camera: u(pour, "camera"), deep: u(pour, "deep"), base: u(pour, "base"), accent: u(pour, "accent"), glow: u(pour, "glow") };
+    const pourUniforms = { resolution: u(pour, "resolution"), time: u(pour, "time"), stir: u(pour, "stir"), camera: u(pour, "camera"), calm: u(pour, "calm"), deep: u(pour, "deep"), base: u(pour, "base"), accent: u(pour, "accent"), glow: u(pour, "glow") };
     const stirUniforms = { previous: u(stir, "previous"), size: u(stir, "size"), pointer: u(stir, "pointer"), velocity: u(stir, "velocity"), aspect: u(stir, "aspect"), decay: u(stir, "decay") };
 
     const draw = (now: number) => {
@@ -251,15 +251,15 @@ export function PourField({ paused, palette }: { paused: boolean; palette: Palet
       // Leave the GPU to the 3D studio while it's on screen.
       if (now - state.lastDraw < (state.studioInView ? 140 : 33)) return;
       const step = Math.min((now - state.lastDraw) / 1000, .1);
-      const still = motion.matches || controls.current.paused;
+      const still = motion.matches;
       if (!still) state.elapsed += step;
 
       const focus = window.scrollY + window.innerHeight * .5;
-      const target = cameraAt(state.anchors, focus);
+      const target = { ...cameraAt(state.anchors, focus) };
       if (motion.matches) target.tilt = state.anchors[0]?.camera.tilt ?? fallbackCamera.tilt;
       const ease = 1 - Math.exp(-step * 4);
       let settling = false;
-      for (const key of ["tilt", "zoom", "exposure"] as const) {
+      for (const key of cameraKeys) {
         const gap = target[key] - state.camera[key];
         state.camera[key] += gap * ease;
         if (Math.abs(gap) > .001) settling = true;
@@ -299,6 +299,7 @@ export function PourField({ paused, palette }: { paused: boolean; palette: Palet
       gl.uniform2f(pourUniforms.resolution, canvas.width, canvas.height);
       gl.uniform1f(pourUniforms.time, state.elapsed);
       gl.uniform4f(pourUniforms.camera, state.camera.tilt, state.camera.zoom, state.travel, state.camera.exposure);
+      gl.uniform1f(pourUniforms.calm, state.camera.calm);
       gl.uniform3fv(pourUniforms.deep, state.colors[0]);
       gl.uniform3fv(pourUniforms.base, state.colors[1]);
       gl.uniform3fv(pourUniforms.accent, state.colors[2]);

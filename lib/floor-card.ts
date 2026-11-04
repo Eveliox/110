@@ -1,4 +1,5 @@
 import { floorSystems, roomNames, sheenNames } from "./floor-studio";
+import { copy, type Lang } from "./copy";
 
 // A shared Floor Studio link (?fs=&fc=&fsh=&fr=) decoded into the design it describes.
 export type SharedDesign = { system: number; color: number; sheen: number; room: number };
@@ -19,9 +20,10 @@ export function readSharedDesign(params: Record<string, string | string[] | unde
   };
 }
 
-export function describeDesign(d: SharedDesign) {
-  const system = floorSystems[d.system], blend = system.colors[d.color];
-  return { system, blend, sheen: sheenNames[d.sheen], room: roomNames[d.room], title: `${blend.name} ${system.name.toLowerCase()}` };
+export function describeDesign(d: SharedDesign, lang: Lang = "en") {
+  const c = copy[lang], system = floorSystems[d.system], blend = system.colors[d.color];
+  const systemName = c.systems[d.system].name, colorName = c.systems[d.system].colors[d.color];
+  return { system, blend, systemName, colorName, sheen: c.sheens[d.sheen], room: c.rooms[d.room], title: c.studio.wornName(colorName, systemName) };
 }
 
 export const designQuery = (d: SharedDesign) => new URLSearchParams({ fs: floorSystems[d.system].id, fc: String(d.color), fsh: String(d.sheen), fr: String(d.room) }).toString();
