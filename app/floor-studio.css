@@ -91,6 +91,11 @@
 .photo-canvas-wrap { position: relative; flex: 1; min-height: 420px; display: grid; place-items: center; background: #0f0a16; padding: 20px; }
 .photo-canvas { max-width: 100%; max-height: 70vh; height: auto; object-fit: contain; touch-action: none; cursor: crosshair; display: block; box-shadow: 0 20px 50px #0007; }
 .photo-canvas-hint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #e8ddea; background: #100b18cc; border: 1px solid #fff2; padding: 7px 13px; border-radius: 30px; display: flex; align-items: center; gap: 7px; pointer-events: none; max-width: 92%; text-align: center; }
+.photo-detect { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 30px; font-size: 11px; color: #f3e6f6; background: #100b18d9; border: 1px solid #fff2; pointer-events: none; }
+.photo-detect-found { color: #c9f2d6; border-color: #9fe0b455; }
+.photo-detect-spin { animation: photo-detect-spin 1s linear infinite; }
+@keyframes photo-detect-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .photo-detect-spin { animation: none; } }
 .photo-actions { display: flex; align-items: center; gap: 10px; padding: 18px 22px; border-top: 1px solid #ffffff12; flex-wrap: wrap; }
 .photo-action-ghost { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid #d3b7dd40; font-size: 10px; color: #e2cce9; border-radius: 30px; }
 .photo-action-ghost:hover { background: #e8cde31a; color: #ffffff; border-color: #efd8ee; }
@@ -241,6 +246,20 @@
 .studio-estimate-figure small { font-size: 10px; color: #b9adbf; }
 .studio-estimate-note { margin-top: 10px; font-size: 10px; line-height: 1.7; color: #a99cae; }
 .studio-estimate-note b { display: block; margin-bottom: 4px; font: 500 8px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; color: #f2b84b; }
+/* Square footage: a typed field plus an optional length × width helper. */
+.studio-area-field { display: block; font-size: 12px; color: #ae94ba; }
+.studio-area-input { margin-top: 8px; display: flex; align-items: center; background: #16101e; border: 1px solid #d9b9e02b; }
+.studio-area-input:focus-within { border-color: #e8cde3; }
+.studio-area-input input { flex: 1; min-width: 0; min-height: 44px; padding: 11px 12px; background: transparent; border: 0; color: #f3e6f6; font-size: 16px; outline: none; }
+.studio-area-input em { padding-right: 12px; font-style: normal; font-size: 12px; color: #ae94ba; }
+.studio-area-measure { margin-top: 10px; }
+.studio-area-measure summary { cursor: pointer; font-size: 12px; color: #d9c2e2; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #d9c2e255; min-height: 32px; display: flex; align-items: center; }
+.studio-area-measure > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; margin-top: 8px; }
+.studio-area-measure label { display: block; font-size: 11px; color: #ae94ba; }
+.studio-area-measure input { margin-top: 6px; width: 100%; min-height: 44px; padding: 10px; background: #16101e; border: 1px solid #d9b9e02b; color: #f3e6f6; font-size: 16px; }
+.studio-area-measure > div > span { padding-bottom: 13px; color: #ae94ba; }
+.studio-area-measure output { grid-column: 1 / -1; font-size: 12px; color: #e9d6ef; min-height: 1em; }
+.studio-area-hint { margin-top: 10px; font-size: 12px; line-height: 1.6; color: #a99cae; }
 /* Full-screen WebXR DOM overlay: the camera view shows through, only the caption and exit sit on top. */
 .ar-overlay { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 20px; pointer-events: none; }
 .ar-overlay[hidden] { display: none; }

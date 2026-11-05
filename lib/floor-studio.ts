@@ -63,7 +63,7 @@ export function colorVector(hex: string): [number, number, number] {
   return [parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255];
 }
 export function selectionDescription(selection: FloorSelection, unit = "sq ft") {
-  return `${selection.finish} / ${selection.color} / ${selection.sheen} / ${selection.room}${selection.area ? ` / ~${selection.area.toLocaleString("en-US")} ${unit}` : ""}`;
+  return `${selection.finish} / ${selection.color} / ${selection.sheen} / ${selection.room}${selection.area ? ` / ${selection.area.toLocaleString("en-US")} ${unit}` : ""}`;
 }
 export function isFloorSelection(value: unknown): value is FloorSelection {
   if (!value || typeof value !== "object") return false;

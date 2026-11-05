@@ -21,3 +21,17 @@ downloaded at 1K texture resolution and compressed (meshopt geometry, WebP textu
 | planter_box_01.glb | [Planter Box 01](https://polyhaven.com/a/planter_box_01) | James Ray Cock |
 | modern_wooden_cabinet.glb | [Modern Wooden Cabinet](https://polyhaven.com/a/modern_wooden_cabinet) | Patrik Pangerl |
 | ottoman_01.glb | [Ottoman 01](https://polyhaven.com/a/Ottoman_01) | Caspian Fortune |
+
+# Floor detection model
+
+"Try in my photo" finds the floor with [SlimSAM](https://github.com/czg1225/SlimSAM), a
+compressed [Segment Anything](https://segment-anything.com) model, released under the Apache
+License 2.0. It runs in the visitor's browser through
+[Transformers.js](https://github.com/huggingface/transformers.js) (Apache-2.0). The ONNX weights
+are [Xenova/slimsam-77-uniform](https://huggingface.co/Xenova/slimsam-77-uniform), pinned to
+revision `5850ab45f587c112167512ffef949107115e26a0` in `lib/floor-segment.worker.ts`; they are
+downloaded from Hugging Face on first use and are not stored in this repository. Photos are
+never uploaded.
+
+SegFormer models trained on ADE20K were considered and rejected: NVIDIA's SegFormer license
+permits non-commercial use only.

@@ -16,7 +16,6 @@ import { LanguageSwitch } from "./LanguageSwitch";
 import { isFloorSelection, selectionDescription, type FloorSelection } from "@/lib/floor-studio";
 import { localePath, localized } from "@/lib/copy";
 import { site } from "@/lib/site";
-import { sizeBucket } from "@/lib/pricing";
 function Button({ href, children, light = false }: {
     href: string;
     children: ReactNode;
@@ -112,20 +111,19 @@ export function Quote({ initial = "" }: {
     const [studioSelection, setStudioSelection] = useState<FloorSelection | null>(null);
     const [sampleRequested, setSampleRequested] = useState(false);
     const [size, setSize] = useState("");
-    const sizes = c.quote.sizes;
     useEffect(() => {
       const receive = (event: Event) => {
         const detail: unknown = (event as CustomEvent).detail;
-        if (isFloorSelection(detail)) { setStudioSelection(detail); setSelectedFinish(detail.finish); if (detail.area) setSize(sizes[sizeBucket(detail.area)]); }
+        if (isFloorSelection(detail)) { setStudioSelection(detail); setSelectedFinish(detail.finish); if (detail.area) setSize(String(detail.area)); }
       };
       const sample = (event: Event) => {
         const detail: unknown = (event as CustomEvent).detail;
-        if (isFloorSelection(detail)) { setStudioSelection(detail); setSelectedFinish(detail.finish); setSampleRequested(true); if (detail.area) setSize(sizes[sizeBucket(detail.area)]); }
+        if (isFloorSelection(detail)) { setStudioSelection(detail); setSelectedFinish(detail.finish); setSampleRequested(true); if (detail.area) setSize(String(detail.area)); }
       };
       window.addEventListener("floor-studio-selection", receive);
       window.addEventListener("floor-studio-sample", sample);
       return () => { window.removeEventListener("floor-studio-selection", receive); window.removeEventListener("floor-studio-sample", sample); };
-    }, [sizes]);
+    }, []);
     const connected = !site.formspreeEndpoint.includes("REPLACE_ME");
     const describe = (selection: FloorSelection) => selectionDescription(selection, c.sqft);
     async function submit(e: FormEvent<HTMLFormElement>) {
@@ -159,7 +157,7 @@ export function Quote({ initial = "" }: {
             setBusy(false);
         }
     }
-    return <section className="quote-section" id="quote" data-pour=".55 1.05 .32 .85"><div className="container quote-grid"><div className="quote-copy"><span className="eyebrow">{c.quote.eyebrow}</span><h2>{c.quote.title[0]}<br /><span>{c.quote.title[1]}</span></h2><p>{c.quote.intro}</p><div className="quote-note"><ArrowRight size={22}/><span>{c.quote.note[0]} <br />{c.quote.note[1]}</span></div><DirectContact /></div><form className="quote-form" onSubmit={submit}><div className="form-heading"><h3>{c.quote.heading}</h3><span>{c.quote.step}</span></div><div className="form-grid">{studioSelection && <div className={`studio-form-choice${sampleRequested ? " studio-form-choice-sample" : ""}`}><Check size={16}/><span>{sampleRequested ? c.quote.sampleRequested : c.quote.studioChoice}<strong>{describe(studioSelection)}</strong></span><button type="button" aria-label={c.quote.removeChoice} onClick={()=>{setStudioSelection(null);setSampleRequested(false);}}><X size={15}/></button><input type="hidden" name="Floor studio selection" value={describe(studioSelection)}/>{sampleRequested && <input type="hidden" name="Request type" value="Free sample"/>}</div>}{c.lang === "es" && <input type="hidden" name="Language" value="Spanish"/>}<label>{c.quote.name}<input name="Name" autoComplete="name" placeholder={c.quote.namePh} required maxLength={120}/></label><label>{c.quote.email}<input type="email" name="Email" autoComplete="email" placeholder={c.quote.emailPh} required/></label><label>{c.quote.phone} <span className="optional">{c.quote.optional}</span><input type="tel" name="Phone" autoComplete="tel" placeholder={c.quote.phonePh}/></label><label>{c.quote.zip}<input name="ZIP code" autoComplete="postal-code" placeholder={c.quote.zipPh} pattern="[0-9]{5}(-[0-9]{4})?" required/></label><label>{c.quote.finish}<select name="Finish" value={selectedFinish} onChange={e=>{setSelectedFinish(e.target.value);setStudioSelection(null);}} required><option value="" disabled>{c.quote.finishPh}</option>{finishes.map((f) => <option key={f.slug} value={f.name}>{f.name}</option>)}<option>{c.quote.helpChoose}</option></select></label><label>{c.quote.size}<select name="Size" value={size} onChange={(e) => setSize(e.target.value)}><option value="">{c.quote.sizePh}</option>{sizes.map(s => <option key={s}>{s}</option>)}</select></label><label className="full-field">{c.quote.details}<textarea name="Project details" placeholder={c.quote.detailsPh} rows={3} maxLength={4000}/></label></div><button className="button form-submit" disabled={busy} type="submit">{busy ? c.quote.sending : connected ? c.quote.send : c.quote.save}{connected ? <ArrowUpRight size={18}/> : <Download size={18}/>}</button><p className="form-note">{connected ? c.quote.privacy : c.quote.closed(site.ownerShort)}</p><p className="form-status" role="status">{status}</p></form><FAQ /></div></section>;
+    return <section className="quote-section" id="quote" data-pour=".55 1.05 .32 .85"><div className="container quote-grid"><div className="quote-copy"><span className="eyebrow">{c.quote.eyebrow}</span><h2>{c.quote.title[0]}<br /><span>{c.quote.title[1]}</span></h2><p>{c.quote.intro}</p><div className="quote-note"><ArrowRight size={22}/><span>{c.quote.note[0]} <br />{c.quote.note[1]}</span></div><DirectContact /></div><form className="quote-form" onSubmit={submit}><div className="form-heading"><h3>{c.quote.heading}</h3><span>{c.quote.step}</span></div><div className="form-grid">{studioSelection && <div className={`studio-form-choice${sampleRequested ? " studio-form-choice-sample" : ""}`}><Check size={16}/><span>{sampleRequested ? c.quote.sampleRequested : c.quote.studioChoice}<strong>{describe(studioSelection)}</strong></span><button type="button" aria-label={c.quote.removeChoice} onClick={()=>{setStudioSelection(null);setSampleRequested(false);}}><X size={15}/></button><input type="hidden" name="Floor studio selection" value={describe(studioSelection)}/>{sampleRequested && <input type="hidden" name="Request type" value="Free sample"/>}</div>}{c.lang === "es" && <input type="hidden" name="Language" value="Spanish"/>}<label>{c.quote.name}<input name="Name" autoComplete="name" placeholder={c.quote.namePh} required maxLength={120}/></label><label>{c.quote.email}<input type="email" name="Email" autoComplete="email" placeholder={c.quote.emailPh} required/></label><label>{c.quote.phone} <span className="optional">{c.quote.optional}</span><input type="tel" name="Phone" autoComplete="tel" placeholder={c.quote.phonePh}/></label><label>{c.quote.zip}<input name="ZIP code" autoComplete="postal-code" placeholder={c.quote.zipPh} pattern="[0-9]{5}(-[0-9]{4})?" required/></label><label>{c.quote.finish}<select name="Finish" value={selectedFinish} onChange={e=>{setSelectedFinish(e.target.value);setStudioSelection(null);}} required><option value="" disabled>{c.quote.finishPh}</option>{finishes.map((f) => <option key={f.slug} value={f.name}>{f.name}</option>)}<option>{c.quote.helpChoose}</option></select></label><label>{c.quote.size} <span className="optional">{c.quote.optional}</span><input type="number" name="Square footage" inputMode="numeric" min={1} max={100000} step={1} value={size} onChange={(e) => setSize(e.target.value)} placeholder={c.quote.sizePh}/></label><label className="full-field">{c.quote.details}<textarea name="Project details" placeholder={c.quote.detailsPh} rows={3} maxLength={4000}/></label></div><button className="button form-submit" disabled={busy} type="submit">{busy ? c.quote.sending : connected ? c.quote.send : c.quote.save}{connected ? <ArrowUpRight size={18}/> : <Download size={18}/>}</button><p className="form-note">{connected ? c.quote.privacy : c.quote.closed(site.ownerShort)}</p><p className="form-status" role="status">{status}</p></form><FAQ /></div></section>;
 }
 function Transformation() {
   const c = useCopy();

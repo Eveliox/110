@@ -21,9 +21,19 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const [color, setColor] = useState(0);
   const [sheen, setSheen] = useState(2);
   const [room, setRoom] = useState(0);
-  // Follows the room's typical size until the visitor sets their own.
-  const [customArea, setCustomArea] = useState<number | null>(null);
+  // The visitor's own square footage, kept as typed so the field can be cleared. Until they
+  // enter one, the room's typical size stands in for the estimate and the photo's pattern scale.
+  const [areaText, setAreaText] = useState("");
+  const [measure, setMeasure] = useState({ length: "", width: "" });
+  const typedArea = Math.round(Number(areaText));
+  const customArea = areaText.trim() !== "" && typedArea >= 1 && typedArea <= 100000 ? typedArea : null;
   const area = customArea ?? roomAreas[room];
+  const measuredArea = Number(measure.length) * Number(measure.width);
+  const updateMeasure = (next: { length: string; width: string }) => {
+    setMeasure(next);
+    const total = Math.round(Number(next.length) * Number(next.width));
+    if (total >= 1) setAreaText(String(total));
+  };
   const [daylight, setDaylight] = useState(0.33);
   const [yaw, setYaw] = useState(23);
   const [elevation, setElevation] = useState(39);
@@ -57,6 +67,8 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
     if (parsedSheen >= 0) setSheen(parsedSheen);
     const parsedRoom = params.has("fr") ? clampIndex(Number(params.get("fr")), roomNames.length) : -1;
     if (parsedRoom >= 0) setRoom(parsedRoom);
+    const sharedArea = Math.round(Number(params.get("fa")));
+    if (sharedArea >= 1 && sharedArea <= 100000) setAreaText(String(sharedArea));
     const dl = Number(params.get("fl"));
     if (Number.isFinite(dl) && dl >= 0 && dl <= 1) setDaylight(dl);
     else if (params.get("fw") === "1") setDaylight(0.66);
@@ -72,12 +84,13 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
   const finishName = c.systems[system].name, blendName = c.systems[system].colors[color], sheenName = c.sheens[sheen], lightName = c.lighting[lighting.stopIndex];
   // The quote form lists finishes by their library names, so pass the matching one.
   const formFinish = c.finishes[finish.id === "flake" ? 0 : finish.id === "metallic" ? 1 : 2].name;
-  const selection: FloorSelection = { system: finish.id, finish: formFinish, color: blendName, sheen: sheenName, room: c.rooms[room], ...(estimatorVisible && { area }) };
+  const selection: FloorSelection = { system: finish.id, finish: formFinish, color: blendName, sheen: sheenName, room: c.rooms[room], ...(customArea !== null && { area: customArea }) };
   const [priceLow, priceHigh] = estimate(finish.id, area);
   const resetView = () => { setYaw(23); setElevation(39); setZoom(10); };
 
   const buildShareUrl = () => {
     const params = new URLSearchParams({ fs: finish.id, fc: String(color), fsh: String(sheen), fr: String(room), fl: daylight.toFixed(2) });
+    if (customArea !== null) params.set("fa", String(customArea));
     return `${window.location.origin}${window.location.pathname}?${params.toString()}#floor-studio`;
   };
 
@@ -162,7 +175,7 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
           </div>
           {mode === "room"
             ? <FloorRoom appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen], room, yaw, elevation, zoom, daylight, firstPerson, installProgress }} backdrop={palette.deep} exportRef={exportRef} onOrbit={(y,e)=>{setYaw(y);setElevation(e);}} />
-            : <PhotoComposer appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} finishLabel={`${blendName} · ${finishName} / ${sheenName}`} />}
+            : <PhotoComposer appearance={{ system, base: blend.base, accent: blend.accent, sheen: [0,.45,1][sheen] }} finishLabel={`${blendName} · ${finishName} / ${sheenName}`} area={area} />}
           {mode === "room" && <div className="studio-preview-summary" aria-live="polite">
             <span><strong>{blendName}</strong><small>{finishName} / {sheenName} · {lightName}</small></span>
             <div className="studio-preview-actions">
@@ -192,13 +205,28 @@ export function FloorStudio({ initialSystem = "metallic" }: { initialSystem?: Fl
               {c.lighting.map(label => <span key={label}>{label}</span>)}
             </div>
           </fieldset>
-          {estimatorVisible && <fieldset className="studio-estimate">
-            <legend><span>04</span> {s.estimate}</legend>
-            <span className="studio-control-label studio-daylight-label">{s.area}<output>{area.toLocaleString("en-US")} {c.sqft}</output></span>
-            <input type="range" min={100} max={3000} step={25} value={area} onChange={e=>setCustomArea(Number(e.target.value))} className="studio-daylight-slider" aria-label={s.areaLabel} />
-            <p className="studio-estimate-figure" aria-live="polite"><strong>${priceLow.toLocaleString("en-US")} – ${priceHigh.toLocaleString("en-US")}</strong><small>{s.installed(finishName)}</small></p>
-            <p className="studio-estimate-note">{!pricing.confirmed && <b>{s.samplePrices}</b>}{s.estimateNote}</p>
-          </fieldset>}
+          <fieldset className="studio-estimate">
+            <legend><span>04</span> {estimatorVisible ? s.estimate : s.yourSize}</legend>
+            <label className="studio-area-field">{s.sqftLabel}
+              <span className="studio-area-input"><input type="number" inputMode="numeric" min={1} max={100000} step={1} value={areaText} placeholder={s.sqftPh(roomAreas[room])} onChange={e => setAreaText(e.target.value)} /><em>{c.sqft}</em></span>
+            </label>
+            <details className="studio-area-measure">
+              <summary>{s.measure}</summary>
+              <div>
+                <label>{s.length}<input type="number" inputMode="decimal" min={0} step="any" value={measure.length} onChange={e => updateMeasure({ ...measure, length: e.target.value })} /></label>
+                <span aria-hidden="true">×</span>
+                <label>{s.width}<input type="number" inputMode="decimal" min={0} step="any" value={measure.width} onChange={e => updateMeasure({ ...measure, width: e.target.value })} /></label>
+                <output aria-live="polite">{measuredArea >= 1 ? s.measured(Math.round(measuredArea).toLocaleString("en-US")) : ""}</output>
+              </div>
+            </details>
+            <p className="studio-area-hint">{s.sqftHint}</p>
+            {estimatorVisible && <>
+              <span className="studio-control-label studio-daylight-label">{s.area}<output>{area.toLocaleString("en-US")} {c.sqft}</output></span>
+              <input type="range" min={100} max={3000} step={25} value={Math.min(3000, Math.max(100, area))} onChange={e => setAreaText(e.target.value)} className="studio-daylight-slider" aria-label={s.areaLabel} />
+              <p className="studio-estimate-figure" aria-live="polite"><strong>${priceLow.toLocaleString("en-US")} – ${priceHigh.toLocaleString("en-US")}</strong><small>{s.installed(finishName)}</small></p>
+              <p className="studio-estimate-note">{!pricing.confirmed && <b>{s.samplePrices}</b>}{s.estimateNote}</p>
+            </>}
+          </fieldset>
           <button className="studio-use-design" onClick={useDesign}>{s.like} <ArrowUpRight size={18}/></button>
           <button className="studio-request-sample" onClick={requestSample}><Mail size={14} />{s.sample}</button>
           <p className="studio-notice" role="status">{notice}</p>
